@@ -1,0 +1,45 @@
+eureka:
+  client:
+    enabled: true
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka/
+  instance:
+    lease-expiration-duration-in-seconds: 10
+    lease-renewal-interval-in-seconds: 5
+    prefer-ip-address: true
+logging:
+  level:
+    com.insight: debug
+server:
+  compression:
+    enabled: true
+    mime-types: application/json
+  port: 16010
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: base-auth
+          uri: lb://base-auth
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/auth/**
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: root
+    database: 1
+    jedis:
+      pool:
+        min-idle: 0
+        max-idle: 8
+        max-wait: -1
