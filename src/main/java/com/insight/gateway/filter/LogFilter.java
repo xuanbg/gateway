@@ -45,7 +45,7 @@ public class LogFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         Log log = new Log();
         log.setTime(new Date());
-        log.setLevel("DEBUG");
+        log.setLevel("INFO");
 
         // 读取客户端IP地址、请求方法和调用的接口URL
         ServerHttpRequest request = exchange.getRequest();

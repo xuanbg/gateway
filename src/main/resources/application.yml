@@ -1,15 +1,16 @@
 eureka:
   client:
-    enabled: true
     service-url:
-      defaultZone: http://127.0.0.1:8761/eureka/
+      defaultZone: http://docker.for.mac.host.internal:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
   instance:
     lease-expiration-duration-in-seconds: 10
     lease-renewal-interval-in-seconds: 5
     prefer-ip-address: true
 logging:
   level:
-    com.insight: debug
+    com.insight: info
 server:
   compression:
     enabled: true
@@ -34,7 +35,7 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   redis:
-    host: 127.0.0.1
+    host: docker.for.mac.host.internal
     port: 6379
     password: root
     database: 1
