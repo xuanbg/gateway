@@ -15,7 +15,7 @@ server:
   compression:
     enabled: true
     mime-types: application/json
-  port: 16010
+  port: 6200
 spring:
   application:
     name: gateway
