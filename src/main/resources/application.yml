@@ -1,7 +1,7 @@
 eureka:
   client:
     service-url:
-      defaultZone: http://docker.for.mac.host.internal:8761/eureka/
+      defaultZone: http://192.168.36.2:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -31,11 +31,35 @@ spring:
             - StripPrefix=0
           predicates:
             - Path=/base/auth/**
+        - id: base-user
+          uri: lb://base-user
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/user/**
+        - id: base-tenant
+          uri: lb://base-tenant
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/tenant/**
+        - id: base-org
+          uri: lb://base-org
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/org/**
+        - id: base-role
+          uri: lb://base-role
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/role/**
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   redis:
-    host: docker.for.mac.host.internal
+    host: 127.0.0.1
     port: 6379
     password: root
     database: 1

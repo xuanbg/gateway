@@ -35,7 +35,7 @@ public class LogFilter implements GlobalFilter, Ordered {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * 日志过滤器
+     * 请求信息日志过滤器
      *
      * @param exchange ServerWebExchange
      * @param chain    GatewayFilterChain
