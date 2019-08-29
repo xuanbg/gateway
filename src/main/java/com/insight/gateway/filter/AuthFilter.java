@@ -6,25 +6,24 @@ import com.insight.util.*;
 import com.insight.util.pojo.LoginInfo;
 import com.insight.util.pojo.Reply;
 import com.insight.util.pojo.TokenInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author 宣炳刚
@@ -33,8 +32,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final List<InterfaceConfig> configs = getConfigs();
+    private List<InterfaceConfig> regConfigs = getRegularConfigs();
+    private Map<String, InterfaceConfig> hashConfigs = getHashConfigs();
 
     /**
      * 令牌持有人信息
@@ -56,31 +55,42 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-        HttpHeaders headers = request.getHeaders();
         HttpMethod method = request.getMethod();
-        RequestPath path = request.getPath();
-        InterfaceConfig config = getConfig(method, path.value());
+        String path = request.getPath().value();
+        InterfaceConfig config = getConfig(method, path);
+        if (config == null) {
+            reply = ReplyHelper.fail("请求的URL不存在");
+            return initResponse(exchange);
+        }
+
+        // 接口限流
+        int limitType = config.getLimitType();
+        if (limitType > 0) {
+            String key;
+            if (limitType == 1) {
+                key = path;
+            } else if (method == HttpMethod.GET) {
+                MultiValueMap<String, String> params = request.getQueryParams();
+                key = Json.toJson(params);
+            } else {
+                Flux<DataBuffer> body = request.getBody();
+                key = body.toString();
+            }
+
+            if (isLimited(Util.md5(key), config.getLimitGap(), config.getLimitCycle(), config.getLimitMax())) {
+                return initResponse(exchange);
+            }
+        }
 
         // 验证及鉴权
+        HttpHeaders headers = request.getHeaders();
         String token = headers.getFirst("Authorization");
         String fingerprint = headers.getFirst("fingerprint");
         if (config.getType() > 0 && verify(token, fingerprint, config.getAuthCode())) {
             return initResponse(exchange);
         }
 
-        if (config.getLimitType().equals(0)) {
-            return chain.filter(exchange);
-        }
-
-        // 接口限流
-        Integer gap = config.getLimitGap();
-        Integer cycle = config.getLimitCycle();
-        Integer max = config.getLimitMax();
-        String key = Util.md5(config.getLimitType().equals(1) ? path.toString() : request.getBody().toString());
-        if (isLimited(key, gap, cycle, max)) {
-            return initResponse(exchange);
-        }
-
+        request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
         return chain.filter(exchange);
     }
 
@@ -92,17 +102,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         return 2;
-    }
-
-    /**
-     * 通过匹配URL获取接口配置
-     *
-     * @param method 请求方法
-     * @param url    请求URL
-     * @return 接口配置
-     */
-    private InterfaceConfig getConfig(HttpMethod method, String url) {
-        return null;
     }
 
     /**
@@ -144,10 +143,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 获取限流计时周期剩余秒数
+     * 是否被限流(访问间隔小于最小时间间隔)
      *
      * @param key 键值
-     * @param gap 限流计时周期秒数
+     * @param gap 访问最小时间间隔
      * @return 是否限制访问
      */
     private boolean isLimited(String key, Integer gap) {
@@ -176,7 +175,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 是否被限流(超过限流计时周期最大访问次数)
+     * 是否被限流(限流计时周期内超过最大访问次数)
      *
      * @param key   键值
      * @param cycle 限流计时周期(秒)
@@ -227,17 +226,86 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         //设置body
         String json = Json.toJson(reply);
-        DataBuffer bodyDataBuffer = response.bufferFactory().wrap(json.getBytes());
+        DataBuffer body = response.bufferFactory().wrap(json.getBytes());
 
-        return response.writeWith(Mono.just(bodyDataBuffer));
+        return response.writeWith(Mono.just(body));
     }
 
     /**
-     * 获取鉴权配置
+     * 通过匹配URL获取接口配置
      *
-     * @return 鉴权配置信息
+     * @param method 请求方法
+     * @param url    请求URL
+     * @return 接口配置
      */
-    private List<InterfaceConfig> getConfigs() {
+    private InterfaceConfig getConfig(HttpMethod method, String url) {
+        // 先进行哈希匹配
+        String hash = Util.md5(method.name() + ":" + url);
+        if (hashConfigs.containsKey(hash)) {
+            return hashConfigs.get(hash);
+        }
+
+        // 哈希匹配失败后进行正则匹配
+        for (InterfaceConfig config : regConfigs) {
+            String regular = config.getRegular();
+            if (Pattern.compile(regular).matcher(url).matches()) {
+                return config;
+            }
+        }
+
+        // 重载配置进行哈希匹配
+        hashConfigs = getHashConfigs();
+        if (hashConfigs.containsKey(hash)) {
+            return hashConfigs.get(hash);
+        }
+
+        // 重载配置进行正则匹配
+        regConfigs = getRegularConfigs();
+        for (InterfaceConfig config : regConfigs) {
+            String regular = config.getRegular();
+            if (Pattern.compile(regular).matcher(url).matches()) {
+                return config;
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * 获取接口配置正则表
+     *
+     * @return 接口配置表
+     */
+    private List<InterfaceConfig> getRegularConfigs() {
+        String json = Redis.get("Config:Interface");
+        List<InterfaceConfig> list = Json.toList(json);
+        for (InterfaceConfig config : list) {
+            String url = config.getUrl();
+            if (url.contains("{")) {
+                config.setRegular("");
+            }
+        }
+
+        return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取接口配置哈希表
+     *
+     * @return 接口配置表
+     */
+    private Map<String, InterfaceConfig> getHashConfigs() {
+        String json = Redis.get("Config:Interface");
+        List<InterfaceConfig> list = Json.toList(json);
+        Map<String, InterfaceConfig> map = new HashMap<>(list.size());
+        for (InterfaceConfig config : list) {
+            String url = config.getUrl();
+            if (!url.contains("{")) {
+                String hash = Util.md5(config.getMethod() + ":" + config.getUrl());
+                map.put(hash, config);
+            }
+        }
+
+        return map;
     }
 }

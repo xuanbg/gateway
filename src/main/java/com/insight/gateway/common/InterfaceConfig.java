@@ -23,14 +23,9 @@ public class InterfaceConfig {
     private Integer type;
 
     /**
-     * 接口URL哈希值
-     */
-    private String hash;
-
-    /**
      * 接口URL正则表达式
      */
-    private String regex;
+    private String regular;
 
     /**
      * 接口授权码
@@ -81,20 +76,12 @@ public class InterfaceConfig {
         this.type = type;
     }
 
-    public String getHash() {
-        return hash;
+    public String getRegular() {
+        return regular;
     }
 
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public String getRegex() {
-        return regex;
-    }
-
-    public void setRegex(String regex) {
-        this.regex = regex;
+    public void setRegular(String regular) {
+        this.regular = regular;
     }
 
     public String getAuthCode() {

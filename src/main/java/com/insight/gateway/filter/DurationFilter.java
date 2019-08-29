@@ -35,6 +35,9 @@ public class DurationFilter implements GlobalFilter, Ordered {
                 return;
             }
 
+            String body = exchange.getResponse().bufferFactory().toString();
+            logger.info("返回数据: " + body);
+
             long duration = (System.currentTimeMillis() - startTime);
             logger.info("时长: " + duration + " ms");
         }));
