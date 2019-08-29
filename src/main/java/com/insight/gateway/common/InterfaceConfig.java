@@ -52,6 +52,11 @@ public class InterfaceConfig {
      */
     private Integer limitMax;
 
+    /**
+     * 限流消息
+     */
+    private String message;
+
     public String getMethod() {
         return method;
     }
@@ -122,5 +127,13 @@ public class InterfaceConfig {
 
     public void setLimitMax(Integer limitMax) {
         this.limitMax = limitMax;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

@@ -32,8 +32,8 @@ import java.util.stream.Collectors;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private List<InterfaceConfig> regConfigs = getRegularConfigs();
-    private Map<String, InterfaceConfig> hashConfigs = getHashConfigs();
+    private List<InterfaceConfig> regConfigs = new ArrayList<>();
+    private Map<String, InterfaceConfig> hashConfigs = new HashMap<>();
 
     /**
      * 令牌持有人信息
@@ -77,7 +77,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 key = body.toString();
             }
 
-            if (isLimited(Util.md5(key), config.getLimitGap(), config.getLimitCycle(), config.getLimitMax())) {
+            if (isLimited(Util.md5(key), config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
                 return initResponse(exchange);
             }
         }
@@ -91,6 +91,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
+
         return chain.filter(exchange);
     }
 
@@ -136,10 +137,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @param gap   访问最小时间间隔(秒)
      * @param cycle 限流计时周期(秒)
      * @param max   限制次数/限流周期
+     * @param msg   消息
      * @return 是否限制访问
      */
-    private boolean isLimited(String key, Integer gap, Integer cycle, Integer max) {
-        return isLimited(key, gap) || isLimited(key, cycle, max);
+    private boolean isLimited(String key, Integer gap, Integer cycle, Integer max, String msg) {
+        return isLimited(key, gap, msg) || isLimited(key, cycle, max, msg);
     }
 
     /**
@@ -147,9 +149,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
      *
      * @param key 键值
      * @param gap 访问最小时间间隔
+     * @param msg 消息
      * @return 是否限制访问
      */
-    private boolean isLimited(String key, Integer gap) {
+    private boolean isLimited(String key, Integer gap, String msg) {
         if (key == null || key.isEmpty() || gap == null || gap.equals(0)) {
             return false;
         }
@@ -170,7 +173,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
         }
 
-        reply = ReplyHelper.tooOften();
+        reply = ReplyHelper.tooOften(msg);
         return true;
     }
 
@@ -180,9 +183,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @param key   键值
      * @param cycle 限流计时周期(秒)
      * @param max   限制次数/限流周期
+     * @param msg   消息
      * @return 是否限制访问
      */
-    private Boolean isLimited(String key, Integer cycle, Integer max) {
+    private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
         if (key == null || key.isEmpty() || cycle == null || cycle.equals(0) || max == null || max.equals(0)) {
             return false;
         }
@@ -200,7 +204,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         Integer count = Integer.valueOf(val);
         long expire = Redis.getExpire(key, TimeUnit.SECONDS);
         if (count > max) {
-            reply = ReplyHelper.tooOften();
+            reply = ReplyHelper.tooOften(msg);
             return true;
         }
 
@@ -278,7 +282,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private List<InterfaceConfig> getRegularConfigs() {
         String json = Redis.get("Config:Interface");
-        List<InterfaceConfig> list = Json.toList(json);
+        List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
         for (InterfaceConfig config : list) {
             String url = config.getUrl();
             if (url.contains("{")) {
@@ -296,7 +300,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private Map<String, InterfaceConfig> getHashConfigs() {
         String json = Redis.get("Config:Interface");
-        List<InterfaceConfig> list = Json.toList(json);
+        List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
         Map<String, InterfaceConfig> map = new HashMap<>(list.size());
         for (InterfaceConfig config : list) {
             String url = config.getUrl();
