@@ -46,7 +46,7 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
                 if (getStatusCode().equals(HttpStatus.OK) && body instanceof Flux) {
                     Flux<? extends DataBuffer> fluxBody = Flux.from(body);
                     return super.writeWith(fluxBody.buffer().map(dataBuffers -> {
-                        List<String> list = new ArrayList<String>();
+                        List<String> list = new ArrayList<>();
                         dataBuffers.forEach(dataBuffer -> {
                             byte[] content = new byte[dataBuffer.readableByteCount()];
                             dataBuffer.read(content);
