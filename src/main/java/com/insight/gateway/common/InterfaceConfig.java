@@ -33,9 +33,9 @@ public class InterfaceConfig {
     private String authCode;
 
     /**
-     * 限流类型:0.不限流;1.按目标URL;2.按请求参数
+     * 是否限流
      */
-    private Integer limitType;
+    private Boolean isLimit;
 
     /**
      * 访问最小时间间隔(秒),0表示无调用时间间隔
@@ -97,12 +97,12 @@ public class InterfaceConfig {
         this.authCode = authCode;
     }
 
-    public Integer getLimitType() {
-        return limitType;
+    public Boolean getLimit() {
+        return isLimit;
     }
 
-    public void setLimitType(Integer limitType) {
-        this.limitType = limitType;
+    public void setLimit(Boolean limit) {
+        isLimit = limit;
     }
 
     public Integer getLimitGap() {

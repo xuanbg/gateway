@@ -15,9 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -67,19 +65,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 接口限流
-        int limitType = config.getLimitType();
-        if (limitType > 0) {
-            String key;
-            if (limitType == 1) {
-                key = path;
-            } else if (method == HttpMethod.GET) {
-                MultiValueMap<String, String> params = request.getQueryParams();
-                key = Json.toJson(params);
-            } else {
-                Flux<DataBuffer> body = request.getBody();
-                key = body.toString();
-            }
-
+        if (config.getLimit()) {
+            String key = method + path;
             String limitKey = Util.md5(fingerprint + key);
             if (isLimited(Util.md5(key), config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
                 return initResponse(exchange);
