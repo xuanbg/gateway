@@ -56,7 +56,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         HttpMethod method = request.getMethod();
+        HttpHeaders headers = request.getHeaders();
+        String fingerprint = headers.getFirst("fingerprint");
         String path = request.getPath().value();
+
         InterfaceConfig config = getConfig(method, path);
         if (config == null) {
             reply = ReplyHelper.fail("请求的URL不存在");
@@ -77,21 +80,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 key = body.toString();
             }
 
+            String limitKey = Util.md5(fingerprint + key);
             if (isLimited(Util.md5(key), config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
                 return initResponse(exchange);
             }
         }
 
         // 验证及鉴权
-        HttpHeaders headers = request.getHeaders();
         String token = headers.getFirst("Authorization");
-        String fingerprint = headers.getFirst("fingerprint");
-        if (config.getType() > 0 && verify(token, fingerprint, config.getAuthCode())) {
+        if (config.getType() > 0 && !verify(token, fingerprint, config.getAuthCode())) {
             return initResponse(exchange);
         }
 
         request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
-
         return chain.filter(exchange);
     }
 
@@ -102,7 +103,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     @Override
     public int getOrder() {
-        return 2;
+        return 3;
     }
 
     /**
@@ -141,7 +142,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否限制访问
      */
     private boolean isLimited(String key, Integer gap, Integer cycle, Integer max, String msg) {
-        return isLimited(key, gap, msg) || isLimited(key, cycle, max, msg);
+        return isLimited(key, gap) || isLimited(key, cycle, max, msg);
     }
 
     /**
@@ -149,10 +150,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
      *
      * @param key 键值
      * @param gap 访问最小时间间隔
-     * @param msg 消息
      * @return 是否限制访问
      */
-    private boolean isLimited(String key, Integer gap, String msg) {
+    private boolean isLimited(String key, Integer gap) {
         if (key == null || key.isEmpty() || gap == null || gap.equals(0)) {
             return false;
         }
@@ -173,7 +173,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
         }
 
-        reply = ReplyHelper.tooOften(msg);
+        reply = ReplyHelper.tooOften();
         return true;
     }
 
