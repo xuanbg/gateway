@@ -36,7 +36,7 @@ public class DurationFilter implements GlobalFilter, Ordered {
             }
 
             long duration = (System.currentTimeMillis() - startTime);
-            logger.info("时长: " + duration + " ms");
+            logger.info("处理时间: " + duration + " ms");
         }));
     }
 
