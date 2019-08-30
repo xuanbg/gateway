@@ -28,7 +28,7 @@ CREATE TABLE `ibi_interface` (
 
 ### 初始化数据
 ```sql
-INSERT `ibi_interface`(`id`, `type`, `name`, `method`, `url`, `auth_code`, `limit_type`, `limit_gap`, `limit_cycle`, `limit_max`, `message`) VALUES 
+INSERT `ibi_interface`(`id`, `type`, `name`, `method`, `url`, `auth_code`, `is_limit`, `limit_gap`, `limit_cycle`, `limit_max`, `message`) VALUES 
 (replace(uuid(), '-', ''), 0, '获取Code', 'GET', '/base/auth/v1.0/tokens/codes', NULL, 1, 1, 86400, 360, '获取Code接口每24小时调用次数为360次,请合理使用'),
 (replace(uuid(), '-', ''), 0, '获取Token', 'POST', '/base/auth/v1.0/tokens', NULL, 1, 1, 86400, 360, '获取Token接口每24小时调用次数为360次,请合理使用'),
 (replace(uuid(), '-', ''), 0, '通过微信授权码获取Token', 'POST', '/base/auth/v1.0/tokens/withWechatCode', NULL, 1, 1, 86400, 360, '获取Token接口每24小时调用次数为360次,请合理使用'),
