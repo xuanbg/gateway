@@ -286,7 +286,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         for (InterfaceConfig config : list) {
             String url = config.getUrl();
             if (url.contains("{")) {
-                config.setRegular("");
+                String reg = url.replaceAll("/\\{[a-zA-Z]+}/", "/[0-9a-f]{32}/");
+                config.setRegular(reg);
             }
         }
 
