@@ -25,3 +25,17 @@ CREATE TABLE `ibi_interface` (
   UNIQUE KEY `idx_interface_hash` (`method`,`url`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT COMMENT='接口表';
 ```
+
+### 初始化数据
+```sql
+INSERT `ibi_interface`(`id`, `type`, `name`, `method`, `url`, `auth_code`, `limit_type`, `limit_gap`, `limit_cycle`, `limit_max`, `message`) VALUES 
+(replace(uuid(), '-', ''), 0, '获取Code', 'GET', '/base/auth/v1.0/tokens/codes', NULL, 1, 1, 86400, 360, '获取Code接口每24小时调用次数为360次,请合理使用'),
+(replace(uuid(), '-', ''), 0, '获取Token', 'POST', '/base/auth/v1.0/tokens', NULL, 1, 1, 86400, 360, '获取Token接口每24小时调用次数为360次,请合理使用'),
+(replace(uuid(), '-', ''), 0, '通过微信授权码获取Token', 'POST', '/base/auth/v1.0/tokens/withWechatCode', NULL, 1, 1, 86400, 360, '获取Token接口每24小时调用次数为360次,请合理使用'),
+(replace(uuid(), '-', ''), 0, '通过微信UnionId获取Token', 'POST', '/base/auth/v1.0/tokens/withWechatUnionId', NULL, 1, 1, 86400, 360, '获取Token接口每24小时调用次数为360次,请合理使用'),
+(replace(uuid(), '-', ''), 1, '验证Token', 'GET', '/base/auth/v1.0/tokens/status', NULL, 0, NULL, NULL, NULL, NULL),
+(replace(uuid(), '-', ''), 0, '刷新Token', 'PUT', '/base/auth/v1.0/tokens', NULL, 1, 1, 3600, 10, '刷新Token接口每小时调用次数为10次,请合理使用'),
+(replace(uuid(), '-', ''), 1, '用户账号离线', 'DELETE', '/base/auth/v1.0/tokens', NULL, 1, 1, NULL, NULL, NULL),
+(replace(uuid(), '-', ''), 1, '获取用户导航栏', 'GET', '/base/auth/v1.0/navigators', NULL, 1, 1, NULL, NULL, NULL),
+(replace(uuid(), '-', ''), 1, '获取模块功能', 'GET', '/base/auth/v1.0/navigators/{id}/functions', NULL, 1, 1, NULL, NULL, NULL);
+```
