@@ -72,7 +72,7 @@ public class LogFilter implements GlobalFilter, Ordered {
 
         // 如请求方法为GET,则打印日志后结束
         if (method.matches("GET")) {
-            logger.info("请求参数：{}", Json.toJson(log));
+            logger.info("请求参数: {}", Json.toJson(log));
 
             return chain.filter(exchange);
         }

@@ -59,7 +59,7 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
                             json = json + i;
                         }
 
-                        logger.info("返回数据:" + json);
+                        logger.info("返回数据: {}", json);
                         return bufferFactory().wrap(json.getBytes());
                     }));
                 }
