@@ -102,6 +102,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否通过验证
      */
     private boolean verify(String token, String fingerprint, String key) {
+        if (token == null || token.isEmpty()){
+            reply = ReplyHelper.invalidToken();
+
+            return false;
+        }
+
         Verify verify = new Verify(token, fingerprint);
         reply = verify.compare(key);
         if (!reply.getSuccess()) {
@@ -273,7 +279,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         for (InterfaceConfig config : list) {
             String url = config.getUrl();
             if (url.contains("{")) {
-                String reg = url.replaceAll("/\\{[a-zA-Z]+}/", "/[0-9a-f]{32}/");
+                String reg = url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
                 config.setRegular(reg);
             }
         }

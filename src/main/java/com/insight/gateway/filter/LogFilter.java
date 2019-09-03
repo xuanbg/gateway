@@ -1,9 +1,9 @@
 package com.insight.gateway.filter;
 
+import com.insight.gateway.common.Log;
 import com.insight.util.Generator;
 import com.insight.util.Json;
 import com.insight.util.Util;
-import com.insight.util.pojo.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -57,10 +57,12 @@ public class LogFilter implements GlobalFilter, Ordered {
             source = request.getRemoteAddress().getAddress().getHostAddress();
         }
 
+        String requestId = Generator.uuid();
         String fingerprint = Util.md5(source + headers.getFirst("user-agent"));
         request.mutate().header("fingerprint", fingerprint).build();
-        request.mutate().header("requestId", Generator.uuid()).build();
+        request.mutate().header("requestId", requestId).build();
 
+        log.setRequestId(requestId);
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());

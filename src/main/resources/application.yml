@@ -25,6 +25,18 @@ spring:
         locator:
           enabled: true
       routes:
+        - id: base-message
+          uri: lb://base-message
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/message/**
+        - id: base-pay
+          uri: lb://base-pay
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/pay/**
         - id: base-auth
           uri: lb://base-auth
           filters:
