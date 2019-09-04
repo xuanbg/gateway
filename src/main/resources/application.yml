@@ -1,13 +1,18 @@
 eureka:
   client:
+    registry-fetch-interval-seconds: 3
     service-url:
       defaultZone: http://192.168.16.1:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
     lease-expiration-duration-in-seconds: 10
-    lease-renewal-interval-in-seconds: 5
+    lease-renewal-interval-in-seconds: 3
     prefer-ip-address: true
+ribbon:
+  ServerListRefreshInterval: 3000
+  ReadTimeout: 10000
+  ConnectTimeout: 5000
 logging:
   level:
     com.insight: info
