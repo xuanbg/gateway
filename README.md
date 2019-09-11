@@ -13,6 +13,62 @@
 
 >网关的部分功能依赖于其他项目的配合
 
+### 接口匹配
+
+网关对接口的匹配模式有两种：哈希匹配模式和正则匹配模式。对于包含URL路径参数的接口，只支持相对低效的正则匹配模式。所以请尽量避免使用包含路径参数的URL。请求URL如未匹配到接口，则会从Redis中加载数据更新哈希匹配表，再进行第二次哈希匹配。如仍然为匹配到接口，则Redis中加载数据更新正则匹配表，然后进行第二次正则匹配。如二次匹配失败，则返回URL不存在的错误。
+
+相关代码如下：
+
+```java
+InterfaceConfig config = getConfig(method, path);
+if (config == null) {
+    reply = ReplyHelper.fail("请求的URL不存在");
+    return initResponse(exchange);
+}
+```
+
+```java
+/**
+ * 通过匹配URL获取接口配置
+ *
+ * @param method 请求方法
+ * @param url    请求URL
+ * @return 接口配置
+ */
+private InterfaceConfig getConfig(HttpMethod method, String url) {
+    // 先进行哈希匹配
+    String hash = Util.md5(method.name() + ":" + url);
+    if (hashConfigs.containsKey(hash)) {
+        return hashConfigs.get(hash);
+    }
+
+    // 哈希匹配失败后进行正则匹配
+    for (InterfaceConfig config : regConfigs) {
+        String regular = config.getRegular();
+        if (Pattern.compile(regular).matcher(url).matches()) {
+            return config;
+        }
+    }
+
+    // 重载配置进行哈希匹配
+    hashConfigs = getHashConfigs();
+    if (hashConfigs.containsKey(hash)) {
+        return hashConfigs.get(hash);
+    }
+
+    // 重载配置进行正则匹配
+    regConfigs = getRegularConfigs();
+    for (InterfaceConfig config : regConfigs) {
+        String regular = config.getRegular();
+        if (Pattern.compile(regular).matcher(url).matches()) {
+            return config;
+        }
+    }
+
+    return null;
+}
+```
+
 ### 限流
 
 接口限流可同时实现两种模式：
