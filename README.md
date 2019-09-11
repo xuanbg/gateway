@@ -71,27 +71,6 @@ private InterfaceConfig getConfig(HttpMethod method, String url) {
 
 ```java
 /**
- * 获取接口配置正则表
- *
- * @return 接口配置表
- */
-private List<InterfaceConfig> getRegularConfigs() {
-    String json = Redis.get("Config:Interface");
-    List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
-    for (InterfaceConfig config : list) {
-        String url = config.getUrl();
-        if (url.contains("{")) {
-            String reg = url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
-            config.setRegular(reg);
-        }
-    }
-
-    return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
-}
-```
-
-```java
-/**
  * 获取接口配置哈希表
  *
  * @return 接口配置表
@@ -109,6 +88,28 @@ private Map<String, InterfaceConfig> getHashConfigs() {
     }
     
     return map;
+}
+```
+
+```java
+/**
+ * 获取接口配置正则表
+ *
+ * @return 接口配置表
+ */
+private List<InterfaceConfig> getRegularConfigs() {
+    String json = Redis.get("Config:Interface");
+    List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
+    for (InterfaceConfig config : list) {
+        String url = config.getUrl();
+        if (url.contains("{")) {
+            // 此正则表达式仅支持UUID作为路径参数，如使用其他类型的参数，请修改正则表达式以匹配参数类型
+            String reg = url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
+            config.setRegular(reg);
+        }
+    }
+
+    return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
 }
 ```
 
