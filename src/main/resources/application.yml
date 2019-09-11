@@ -16,6 +16,8 @@ ribbon:
 logging:
   level:
     com.insight: info
+#  pattern:
+#    console: %d{yyyy-MM-dd HH:mm:ss.SSS} gateway [%-5level] %X{requestId} %logger{35} : %msg%n
 server:
   compression:
     enabled: true

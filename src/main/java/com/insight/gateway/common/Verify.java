@@ -4,14 +4,12 @@ import com.insight.util.Json;
 import com.insight.util.Redis;
 import com.insight.util.ReplyHelper;
 import com.insight.util.Util;
-import com.insight.util.common.ApplicationContextHolder;
 import com.insight.util.pojo.AccessToken;
 import com.insight.util.pojo.Reply;
 import com.insight.util.pojo.TokenInfo;
 import com.insight.util.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
 
@@ -21,8 +19,7 @@ import java.util.List;
  * @remark 用户身份验证类
  */
 public class Verify {
-    private final Logger logger;
-    private final StringRedisTemplate redis;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * 令牌哈希值
@@ -51,9 +48,6 @@ public class Verify {
      * @param fingerprint 用户特征串
      */
     public Verify(String token, String fingerprint) {
-        this.redis = ApplicationContextHolder.getContext().getBean(StringRedisTemplate.class);
-        this.logger = LoggerFactory.getLogger(this.getClass());
-
         // 初始化参数
         hash = Util.md5(token + fingerprint);
         AccessToken accessToken = Json.toAccessToken(token);
@@ -79,6 +73,10 @@ public class Verify {
             return ReplyHelper.invalidToken();
         }
 
+        if (isInvalid()) {
+            return ReplyHelper.fail("用户已被禁用");
+        }
+
         // 验证令牌
         if (!basis.verifyToken(hash)) {
             return ReplyHelper.invalidToken();
@@ -90,10 +88,6 @@ public class Verify {
 
         if (basis.isFailure()) {
             return ReplyHelper.invalidToken();
-        }
-
-        if (isInvalid()) {
-            return ReplyHelper.fail("用户已被禁用");
         }
 
         // 无需鉴权,返回成功
@@ -131,15 +125,6 @@ public class Verify {
     }
 
     /**
-     * 获取令牌ID
-     *
-     * @return 令牌ID
-     */
-    public String getTokenId() {
-        return tokenId;
-    }
-
-    /**
      * 获取令牌持有人的用户ID
      *
      * @return 用户ID
@@ -164,7 +149,7 @@ public class Verify {
      */
     private TokenInfo getToken() {
         String key = "Token:" + tokenId;
-        String json = redis.opsForValue().get(key);
+        String json = Redis.get(key);
 
         return Json.toBean(json, TokenInfo.class);
     }
