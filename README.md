@@ -43,9 +43,10 @@ private InterfaceConfig getConfig(HttpMethod method, String url) {
     }
 
     // 哈希匹配失败后进行正则匹配
+    String path = method + ":" + url;
     for (InterfaceConfig config : regConfigs) {
         String regular = config.getRegular();
-        if (Pattern.compile(regular).matcher(url).matches()) {
+        if (Pattern.compile(regular).matcher(path).matches()) {
             return config;
         }
     }
@@ -60,7 +61,7 @@ private InterfaceConfig getConfig(HttpMethod method, String url) {
     regConfigs = getRegularConfigs();
     for (InterfaceConfig config : regConfigs) {
         String regular = config.getRegular();
-        if (Pattern.compile(regular).matcher(url).matches()) {
+        if (Pattern.compile(regular).matcher(path).matches()) {
             return config;
         }
     }
@@ -101,11 +102,12 @@ private List<InterfaceConfig> getRegularConfigs() {
     String json = Redis.get("Config:Interface");
     List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
     for (InterfaceConfig config : list) {
+        String method = config.getMethod();
         String url = config.getUrl();
         if (url.contains("{")) {
-            // 此正则表达式仅支持UUID作为路径参数，如使用其他类型的参数，请修改正则表达式以匹配参数类型
-            String reg = url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
-            config.setRegular(reg);
+            // 此正则表达式仅支持UUID作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
+            String regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
+            config.setRegular(regular);
         }
     }
 
