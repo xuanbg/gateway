@@ -18,11 +18,6 @@ public class InterfaceConfig {
     private String url;
 
     /**
-     * 接口类型:0.公开;1.私有;2.授权
-     */
-    private Integer type;
-
-    /**
      * 接口URL正则表达式
      */
     private String regular;
@@ -31,11 +26,6 @@ public class InterfaceConfig {
      * 接口授权码
      */
     private String authCode;
-
-    /**
-     * 是否限流
-     */
-    private Boolean isLimit;
 
     /**
      * 访问最小时间间隔(秒),0表示无调用时间间隔
@@ -57,6 +47,16 @@ public class InterfaceConfig {
      */
     private String message;
 
+    /**
+     * 是否验证Token
+     */
+    private Boolean isVerify;
+
+    /**
+     * 是否限流
+     */
+    private Boolean isLimit;
+
     public String getMethod() {
         return method;
     }
@@ -73,14 +73,6 @@ public class InterfaceConfig {
         this.url = url;
     }
 
-    public Integer getType() {
-        return type;
-    }
-
-    public void setType(Integer type) {
-        this.type = type;
-    }
-
     public String getRegular() {
         return regular;
     }
@@ -95,14 +87,6 @@ public class InterfaceConfig {
 
     public void setAuthCode(String authCode) {
         this.authCode = authCode;
-    }
-
-    public Boolean getLimit() {
-        return isLimit;
-    }
-
-    public void setLimit(Boolean limit) {
-        isLimit = limit;
     }
 
     public Integer getLimitGap() {
@@ -135,5 +119,21 @@ public class InterfaceConfig {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Boolean getVerify() {
+        return isVerify;
+    }
+
+    public void setVerify(Boolean verify) {
+        isVerify = verify;
+    }
+
+    public Boolean getLimit() {
+        return isLimit;
+    }
+
+    public void setLimit(Boolean limit) {
+        isLimit = limit;
     }
 }

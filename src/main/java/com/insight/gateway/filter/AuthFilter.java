@@ -74,8 +74,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 验证及鉴权
-        String token = headers.getFirst("Authorization");
-        if (config.getType() > 0 && !verify(token, fingerprint, config.getAuthCode())) {
+        if (config.getVerify() && !verify(headers.getFirst("Authorization"), fingerprint, config.getAuthCode())) {
             return initResponse(exchange);
         }
 
@@ -98,18 +97,18 @@ public class AuthFilter implements GlobalFilter, Ordered {
      *
      * @param token       令牌
      * @param fingerprint 用户特征串
-     * @param key         操作权限代码
+     * @param authCodes   接口授权码
      * @return 是否通过验证
      */
-    private boolean verify(String token, String fingerprint, String key) {
-        if (token == null || token.isEmpty()){
+    private boolean verify(String token, String fingerprint, String authCodes) {
+        if (token == null || token.isEmpty()) {
             reply = ReplyHelper.invalidToken();
 
             return false;
         }
 
         Verify verify = new Verify(token, fingerprint);
-        reply = verify.compare(key);
+        reply = verify.compare(authCodes);
         if (!reply.getSuccess()) {
             return false;
         }

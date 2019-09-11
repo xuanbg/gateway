@@ -71,19 +71,10 @@ public class Verify {
     /**
      * 验证Token合法性
      *
+     * @param authCodes 接口授权码
      * @return Reply Token验证结果
      */
-    public Reply compare() {
-        return compare(null);
-    }
-
-    /**
-     * 验证Token合法性
-     *
-     * @param function 功能ID或URL
-     * @return Reply Token验证结果
-     */
-    public Reply compare(String function) {
+    public Reply compare(String authCodes) {
         if (basis == null) {
             return ReplyHelper.invalidToken();
         }
@@ -106,17 +97,17 @@ public class Verify {
         }
 
         // 无需鉴权,返回成功
-        if (function == null || function.isEmpty()) {
+        if (authCodes == null || authCodes.isEmpty()) {
             return ReplyHelper.success();
         }
 
         // 进行鉴权,返回鉴权结果
-        if (isPermit(function)) {
+        if (isPermit(authCodes)) {
             return ReplyHelper.success();
         }
 
         String account = getUser().getAccount();
-        logger.warn("用户『" + account + "』试图使用未授权的功能:" + function);
+        logger.warn("用户『" + account + "』试图使用未授权的功能:" + authCodes);
 
         return ReplyHelper.noAuth();
     }
@@ -208,12 +199,18 @@ public class Verify {
     /**
      * 指定的功能是否授权给用户
      *
-     * @param function 功能ID或功能对应接口URL
+     * @param authCodes 接口授权码
      * @return 功能是否授权给用户
      */
-    private Boolean isPermit(String function) {
+    private Boolean isPermit(String authCodes) {
         List<String> functions = basis.getPermitFuncs();
+        String[] codes = authCodes.split(",");
+        for (String code : codes) {
+            if (functions.stream().anyMatch(i -> i.equalsIgnoreCase(code))) {
+                return true;
+            }
+        }
 
-        return functions.stream().anyMatch(i -> i.equalsIgnoreCase(function));
+        return false;
     }
 }
