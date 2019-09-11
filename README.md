@@ -69,6 +69,49 @@ private InterfaceConfig getConfig(HttpMethod method, String url) {
 }
 ```
 
+```java
+/**
+ * 获取接口配置正则表
+ *
+ * @return 接口配置表
+ */
+private List<InterfaceConfig> getRegularConfigs() {
+    String json = Redis.get("Config:Interface");
+    List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
+    for (InterfaceConfig config : list) {
+        String url = config.getUrl();
+        if (url.contains("{")) {
+            String reg = url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
+            config.setRegular(reg);
+        }
+    }
+
+    return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
+}
+```
+
+```java
+/**
+ * 获取接口配置哈希表
+ *
+ * @return 接口配置表
+ */
+private Map<String, InterfaceConfig> getHashConfigs() {
+    String json = Redis.get("Config:Interface");
+    List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
+    Map<String, InterfaceConfig> map = new HashMap<>(list.size());
+    for (InterfaceConfig config : list) {
+        String url = config.getUrl();
+        if (!url.contains("{")) {
+            String hash = Util.md5(config.getMethod() + ":" + config.getUrl());
+            map.put(hash, config);
+        }
+    }
+    
+    return map;
+}
+```
+
 ### 限流
 
 接口限流可同时实现两种模式：
