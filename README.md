@@ -87,7 +87,7 @@ private Map<String, InterfaceConfig> getHashConfigs() {
             map.put(hash, config);
         }
     }
-    
+
     return map;
 }
 ```
