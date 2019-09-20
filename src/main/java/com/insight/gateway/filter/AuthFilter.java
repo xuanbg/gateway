@@ -5,7 +5,6 @@ import com.insight.gateway.common.Verify;
 import com.insight.util.*;
 import com.insight.util.pojo.LoginInfo;
 import com.insight.util.pojo.Reply;
-import com.insight.util.pojo.TokenInfo;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -36,7 +35,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 令牌持有人信息
      */
-    private LoginInfo loginInfo = new LoginInfo();
+    private LoginInfo loginInfo;
 
     /**
      * 验证结果
@@ -78,7 +77,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return initResponse(exchange);
         }
 
-        request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
+        if (loginInfo != null) {
+            request.mutate().header("loginInfo", loginInfo.toString()).build();
+        }
+
         return chain.filter(exchange);
     }
 
@@ -113,13 +115,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        TokenInfo basis = verify.getBasis();
-        loginInfo.setAppId(basis.getAppId());
-        loginInfo.setTenantId(basis.getTenantId());
-        loginInfo.setDeptId(basis.getDeptId());
-        loginInfo.setUserId(verify.getUserId());
-        loginInfo.setUserName(verify.getUserName());
-
+        loginInfo = Json.clone(verify, LoginInfo.class);
         return true;
     }
 

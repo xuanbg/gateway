@@ -4,10 +4,7 @@ import com.insight.util.Json;
 import com.insight.util.Redis;
 import com.insight.util.ReplyHelper;
 import com.insight.util.Util;
-import com.insight.util.pojo.AccessToken;
-import com.insight.util.pojo.Reply;
-import com.insight.util.pojo.TokenInfo;
-import com.insight.util.pojo.User;
+import com.insight.util.pojo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +49,7 @@ public class Verify {
         hash = Util.md5(token + fingerprint);
         AccessToken accessToken = Json.toAccessToken(token);
         if (accessToken == null) {
-            logger.error("提取验证信息失败。TokenManage is:" + token);
+            logger.error("提取验证信息失败。Token is:" + token);
 
             return;
         }
@@ -73,8 +70,13 @@ public class Verify {
             return ReplyHelper.invalidToken();
         }
 
+        // 验证用户
         if (isInvalid()) {
-            return ReplyHelper.fail("用户已被禁用");
+            return ReplyHelper.forbid();
+        }
+
+        if (isLoginElsewhere()) {
+            return ReplyHelper.fail("用户已在其他设备登录");
         }
 
         // 验证令牌
@@ -116,12 +118,30 @@ public class Verify {
     }
 
     /**
-     * 获取缓存中的Token
+     * 获取令牌持有人的应用ID
      *
-     * @return TokenInfo
+     * @return 应用ID
      */
-    public TokenInfo getBasis() {
-        return basis;
+    public String getAppId() {
+        return basis.getAppId();
+    }
+
+    /**
+     * 获取令牌持有人的租户ID
+     *
+     * @return 租户ID
+     */
+    public String getTenantId() {
+        return basis.getTenantId();
+    }
+
+    /**
+     * 获取令牌持有人的部门ID
+     *
+     * @return 部门ID
+     */
+    public String getDeptId() {
+        return basis.getDeptId();
     }
 
     /**
@@ -155,15 +175,33 @@ public class Verify {
     }
 
     /**
+     * 用户是否已在其他设备登录
+     *
+     * @return 是否已在其他设备登录
+     */
+    private boolean isLoginElsewhere() {
+        String appId = basis.getAppId();
+        String type = Redis.get("App:" + appId, "SignInType");
+        if (!Boolean.parseBoolean(type)) {
+            return false;
+        }
+
+        String key = "UserToken:" + userId;
+        String value = Redis.get(key, appId);
+
+        return !tokenId.equals(value);
+    }
+
+    /**
      * 用户是否被禁用
      *
-     * @return User(可能为null)
+     * @return 是否被禁用
      */
     private boolean isInvalid() {
         String key = "User:" + userId;
-        String value = Redis.get(key, "IsInvalid");
+        String value = Redis.get(key, "invalid");
         if (value == null) {
-            return true;
+            return false;
         }
 
         return Boolean.parseBoolean(value);
@@ -176,9 +214,8 @@ public class Verify {
      */
     private User getUser() {
         String key = "User:" + userId;
-        String value = Redis.get(key, "User");
 
-        return Json.toBean(value, User.class);
+        return Redis.get(key, User.class);
     }
 
     /**
