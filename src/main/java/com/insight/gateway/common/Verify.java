@@ -58,8 +58,8 @@ public class Verify {
         }
 
         tokenId = accessToken.getId();
-        userId = accessToken.getUserId();
         basis = getToken();
+        userId = basis.getUserId();
     }
 
     /**
