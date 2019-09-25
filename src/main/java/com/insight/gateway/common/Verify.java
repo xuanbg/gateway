@@ -56,7 +56,7 @@ public class Verify {
 
         tokenId = accessToken.getId();
         basis = getToken();
-        userId = basis.getUserId();
+        userId = basis == null ? null : basis.getUserId();
     }
 
     /**
