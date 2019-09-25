@@ -72,15 +72,18 @@ public class AuthFilter implements GlobalFilter, Ordered {
             }
         }
 
+        if (!config.getVerify()) {
+            return chain.filter(exchange);
+        }
+
         // 验证及鉴权
-        if (config.getVerify() && !verify(headers.getFirst("Authorization"), fingerprint, config.getAuthCode())) {
+        String token = headers.getFirst("Authorization");
+        boolean verified = verify(token, fingerprint, config.getAuthCode());
+        if (!verified) {
             return initResponse(exchange);
         }
 
-        if (loginInfo != null) {
-            request.mutate().header("loginInfo", loginInfo.toString()).build();
-        }
-
+        request.mutate().header("loginInfo", loginInfo.toString()).build();
         return chain.filter(exchange);
     }
 
