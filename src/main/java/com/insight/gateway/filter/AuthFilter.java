@@ -78,8 +78,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 验证及鉴权
         String token = headers.getFirst("Authorization");
-        boolean verified = verify(token, fingerprint, config.getAuthCode());
-        if (!verified) {
+        boolean isVerified = verify(token, fingerprint, config.getAuthCode());
+        if (!isVerified) {
             return initResponse(exchange);
         }
 
