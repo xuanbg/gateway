@@ -2,7 +2,7 @@ eureka:
   client:
     registry-fetch-interval-seconds: 3
     service-url:
-      defaultZone: http://192.168.16.1:8761/eureka/
+      defaultZone: http://192.168.236.8:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -78,7 +78,7 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   redis:
-    host: 192.168.16.1
+    host: 192.168.236.8
     port: 6379
     password: root
     database: 1

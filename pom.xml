@@ -47,7 +47,7 @@
     <repositories>
         <repository>
             <id>local_release</id>
-            <url>http://localhost:8081/repository/maven-releases/</url>
+            <url>http://192.168.236.8:8081/repository/maven-releases/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
