@@ -241,7 +241,14 @@ private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
 相关代码如下：
 
 ```java
-if (config.getVerify() && !verify(headers.getFirst("Authorization"), fingerprint config.getAuthCode())) {
+if (!config.getVerify()) {
+    return chain.filter(exchange);
+}
+
+// 验证及鉴权
+String token = headers.getFirst("Authorization");
+boolean isVerified = verify(token, fingerprint, config.getAuthCode());
+if (!isVerified) {
     return initResponse(exchange);
 }
 ```
@@ -451,6 +458,10 @@ public class Verify {
      */
     private Boolean isPermit(String authCodes) {
         List<String> functions = basis.getPermitFuncs();
+        if (functions == null){
+            return false;
+        }
+
         String[] codes = authCodes.split(",");
         for (String code : codes) {
             if (functions.stream().anyMatch(i -> i.equalsIgnoreCase(code))) {

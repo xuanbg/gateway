@@ -226,6 +226,10 @@ public class Verify {
      */
     private Boolean isPermit(String authCodes) {
         List<String> functions = basis.getPermitFuncs();
+        if (functions == null){
+            return false;
+        }
+
         String[] codes = authCodes.split(",");
         for (String code : codes) {
             if (functions.stream().anyMatch(i -> i.equalsIgnoreCase(code))) {
