@@ -1,7 +1,5 @@
 package com.insight.gateway.common;
 
-import com.insight.util.pojo.AccessToken;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -43,11 +41,6 @@ public class Log implements Serializable {
      * 目标接口URL
      */
     private String url;
-
-    /**
-     * 访问令牌
-     */
-    private AccessToken token;
 
     /**
      * 请求头信息
@@ -110,14 +103,6 @@ public class Log implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    public AccessToken getToken() {
-        return token;
-    }
-
-    public void setToken(AccessToken token) {
-        this.token = token;
     }
 
     public Map<String, String> getHeaders() {

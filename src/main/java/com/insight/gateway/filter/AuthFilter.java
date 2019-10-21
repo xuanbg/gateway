@@ -52,10 +52,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         HttpMethod method = request.getMethod();
-        HttpHeaders headers = request.getHeaders();
-        String fingerprint = headers.getFirst("fingerprint");
         String path = request.getPath().value();
-
         InterfaceConfig config = getConfig(method, path);
         if (config == null) {
             reply = ReplyHelper.fail("请求的URL不存在");
@@ -63,19 +60,21 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 接口限流
+        HttpHeaders headers = request.getHeaders();
+        String fingerprint = headers.getFirst("fingerprint");
         if (config.getLimit()) {
-            String key = method + path;
-            String limitKey = Util.md5(fingerprint + key);
-            if (isLimited(Util.md5(key), config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
+            String key = method + ":" + path;
+            String limitKey = Util.md5(fingerprint + "|" + key);
+            if (isLimited(limitKey, config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
                 return initResponse(exchange);
             }
         }
 
+        // 验证及鉴权
         if (!config.getVerify()) {
             return chain.filter(exchange);
         }
 
-        // 验证及鉴权
         String token = headers.getFirst("Authorization");
         boolean isVerified = verify(token, fingerprint, config.getAuthCode());
         if (!isVerified) {
