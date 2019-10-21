@@ -221,22 +221,23 @@ public class Verify {
     /**
      * 指定的功能是否授权给用户
      *
-     * @param authCodes 接口授权码
+     * @param authCode 接口授权码
      * @return 功能是否授权给用户
      */
-    private Boolean isPermit(String authCodes) {
+    private Boolean isPermit(String authCode) {
         List<String> functions = basis.getPermitFuncs();
-        if (functions == null){
+        if (functions == null) {
             return false;
         }
 
-        String[] codes = authCodes.split(",");
-        for (String code : codes) {
-            if (functions.stream().anyMatch(i -> i.equalsIgnoreCase(code))) {
-                return true;
+        return functions.stream().anyMatch(i -> {
+            String[] codes = i.split(",");
+            for (String code : codes) {
+                if (authCode.equalsIgnoreCase(code)) {
+                    return true;
+                }
             }
-        }
-
-        return false;
+            return false;
+        });
     }
 }

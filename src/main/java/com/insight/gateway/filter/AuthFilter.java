@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -244,7 +243,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String path = method + ":" + url;
         for (InterfaceConfig config : regConfigs) {
             String regular = config.getRegular();
-            if (Pattern.compile(regular).matcher(path).matches()) {
+            if (path.matches(regular)) {
                 return config;
             }
         }
@@ -259,7 +258,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         regConfigs = getRegularConfigs();
         for (InterfaceConfig config : regConfigs) {
             String regular = config.getRegular();
-            if (Pattern.compile(regular).matcher(path).matches()) {
+            if (path.matches(regular)) {
                 return config;
             }
         }
