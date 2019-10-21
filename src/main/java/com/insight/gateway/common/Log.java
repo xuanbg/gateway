@@ -3,7 +3,7 @@ package com.insight.gateway.common;
 import com.insight.util.pojo.AccessToken;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -22,7 +22,7 @@ public class Log implements Serializable {
     /**
      * 日志时间
      */
-    private Date time;
+    private LocalDateTime time;
 
     /**
      * 日志级别(DEBUG,INFO,WARN,ERROR)
@@ -72,11 +72,11 @@ public class Log implements Serializable {
         this.requestId = requestId;
     }
 
-    public Date getTime() {
+    public LocalDateTime getTime() {
         return time;
     }
 
-    public void setTime(Date time) {
+    public void setTime(LocalDateTime time) {
         this.time = time;
     }
 

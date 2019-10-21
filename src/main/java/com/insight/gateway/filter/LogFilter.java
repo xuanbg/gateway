@@ -20,7 +20,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -44,7 +44,7 @@ public class LogFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         Log log = new Log();
-        log.setTime(new Date());
+        log.setTime(LocalDateTime.now());
         log.setLevel("INFO");
 
         // 读取客户端IP地址、请求方法和调用的接口URL
