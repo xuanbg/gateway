@@ -5,6 +5,8 @@ import com.insight.gateway.common.Verify;
 import com.insight.util.*;
 import com.insight.util.pojo.LoginInfo;
 import com.insight.util.pojo.Reply;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -30,6 +32,8 @@ import java.util.stream.Collectors;
 public class AuthFilter implements GlobalFilter, Ordered {
     private List<InterfaceConfig> regConfigs = new ArrayList<>();
     private Map<String, InterfaceConfig> hashConfigs = new HashMap<>();
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final String COUNT_START_TIME = "StartTime";
 
     /**
      * 令牌持有人信息
@@ -92,7 +96,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     @Override
     public int getOrder() {
-        return 3;
+        return 1;
     }
 
     /**
@@ -210,16 +214,22 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     private Mono<Void> initResponse(ServerWebExchange exchange) {
-        ServerHttpResponse response = exchange.getResponse();
-
         //设置headers
+        ServerHttpResponse response = exchange.getResponse();
         HttpHeaders httpHeaders = response.getHeaders();
         httpHeaders.add("Content-Type", "application/json; charset=UTF-8");
         httpHeaders.add("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
 
         //设置body
         String json = Json.toJson(reply);
+        logger.info("返回数据: {}", json);
         DataBuffer body = response.bufferFactory().wrap(json.getBytes());
+
+        Long startTime = exchange.getAttribute(COUNT_START_TIME);
+        if (startTime != null){
+            long duration = (System.currentTimeMillis() - startTime);
+            logger.info("处理时间: {} ms", duration);
+        }
 
         return response.writeWith(Mono.just(body));
     }

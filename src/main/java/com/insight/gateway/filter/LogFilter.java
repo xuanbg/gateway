@@ -99,7 +99,7 @@ public class LogFilter implements GlobalFilter, Ordered {
      */
     @Override
     public int getOrder() {
-        return 2;
+        return 0;
     }
 
     /**
