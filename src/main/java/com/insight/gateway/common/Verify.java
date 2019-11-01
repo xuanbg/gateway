@@ -29,6 +29,11 @@ public class Verify {
     private TokenInfo basis;
 
     /**
+     * 缓存中的用户信息
+     */
+    private User user;
+
+    /**
      * 令牌ID
      */
     private String tokenId;
@@ -56,7 +61,12 @@ public class Verify {
 
         tokenId = accessToken.getId();
         basis = getToken();
-        userId = basis == null ? null : basis.getUserId();
+        if (basis == null){
+            return;
+        }
+
+        userId = basis.getUserId();
+        user = Redis.get("User:" + userId, User.class);
     }
 
     /**
@@ -102,7 +112,7 @@ public class Verify {
             return ReplyHelper.success();
         }
 
-        String account = getUser().getAccount();
+        String account = user.getAccount();
         logger.warn("用户『" + account + "』试图使用未授权的功能:" + authCodes);
 
         return ReplyHelper.noAuth();
@@ -159,7 +169,7 @@ public class Verify {
      * @return 用户名
      */
     public String getUserName() {
-        return getUser().getName();
+        return user.getName();
     }
 
     /**
@@ -205,17 +215,6 @@ public class Verify {
         }
 
         return Boolean.parseBoolean(value);
-    }
-
-    /**
-     * 读取缓存中的用户数据
-     *
-     * @return 用户数据
-     */
-    private User getUser() {
-        String key = "User:" + userId;
-
-        return Redis.get(key, User.class);
     }
 
     /**
