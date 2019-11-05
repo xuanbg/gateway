@@ -1,4 +1,4 @@
-package com.insight.gateway.common;
+package com.insight.gateway.common.dto;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -9,7 +9,7 @@ import java.util.Map;
  * @date 2017/11/4
  * @remark 日志记录类
  */
-public class Log implements Serializable {
+public class LogDto implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**

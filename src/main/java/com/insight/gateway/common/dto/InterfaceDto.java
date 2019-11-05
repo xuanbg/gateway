@@ -1,11 +1,11 @@
-package com.insight.gateway.common;
+package com.insight.gateway.common.dto;
 
 /**
  * @author 宣炳刚
  * @date 2019-08-29
  * @remark 接口配置信息
  */
-public class InterfaceConfig {
+public class InterfaceDto {
 
     /**
      * 接口HTTP请求方法

@@ -1,6 +1,6 @@
 package com.insight.gateway.filter;
 
-import com.insight.gateway.common.Log;
+import com.insight.gateway.common.dto.LogDto;
 import com.insight.util.Generator;
 import com.insight.util.Json;
 import com.insight.util.Util;
@@ -43,7 +43,7 @@ public class LogFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        Log log = new Log();
+        LogDto log = new LogDto();
         log.setTime(LocalDateTime.now());
         log.setLevel("INFO");
 

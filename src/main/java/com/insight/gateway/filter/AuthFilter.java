@@ -1,6 +1,6 @@
 package com.insight.gateway.filter;
 
-import com.insight.gateway.common.InterfaceConfig;
+import com.insight.gateway.common.dto.InterfaceDto;
 import com.insight.gateway.common.Verify;
 import com.insight.util.*;
 import com.insight.util.pojo.LoginInfo;
@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private List<InterfaceConfig> regConfigs = new ArrayList<>();
-    private Map<String, InterfaceConfig> hashConfigs = new HashMap<>();
+    private List<InterfaceDto> regConfigs = new ArrayList<>();
+    private Map<String, InterfaceDto> hashConfigs = new HashMap<>();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String COUNT_START_TIME = "StartTime";
 
@@ -57,7 +57,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         HttpMethod method = request.getMethod();
         String path = request.getPath().value();
-        InterfaceConfig config = getConfig(method, path);
+        InterfaceDto config = getConfig(method, path);
         if (config == null) {
             reply = ReplyHelper.fail("请求的URL不存在");
             return initResponse(exchange);
@@ -241,7 +241,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @param url    请求URL
      * @return 接口配置
      */
-    private InterfaceConfig getConfig(HttpMethod method, String url) {
+    private InterfaceDto getConfig(HttpMethod method, String url) {
         // 先进行哈希匹配
         String hash = Util.md5(method.name() + ":" + url);
         if (hashConfigs.containsKey(hash)) {
@@ -250,7 +250,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 哈希匹配失败后进行正则匹配
         String path = method + ":" + url;
-        for (InterfaceConfig config : regConfigs) {
+        for (InterfaceDto config : regConfigs) {
             String regular = config.getRegular();
             if (path.matches(regular)) {
                 return config;
@@ -265,7 +265,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 重载配置进行正则匹配
         regConfigs = getRegularConfigs();
-        for (InterfaceConfig config : regConfigs) {
+        for (InterfaceDto config : regConfigs) {
             String regular = config.getRegular();
             if (path.matches(regular)) {
                 return config;
@@ -280,11 +280,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
      *
      * @return 接口配置表
      */
-    private Map<String, InterfaceConfig> getHashConfigs() {
+    private Map<String, InterfaceDto> getHashConfigs() {
         String json = Redis.get("Config:Interface");
-        List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
-        Map<String, InterfaceConfig> map = new HashMap<>(list.size());
-        for (InterfaceConfig config : list) {
+        List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
+        Map<String, InterfaceDto> map = new HashMap<>(list.size());
+        for (InterfaceDto config : list) {
             String url = config.getUrl();
             if (!url.contains("{")) {
                 String hash = Util.md5(config.getMethod() + ":" + config.getUrl());
@@ -300,10 +300,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
      *
      * @return 接口配置表
      */
-    private List<InterfaceConfig> getRegularConfigs() {
+    private List<InterfaceDto> getRegularConfigs() {
         String json = Redis.get("Config:Interface");
-        List<InterfaceConfig> list = Json.toList(json, InterfaceConfig.class);
-        for (InterfaceConfig config : list) {
+        List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
+        for (InterfaceDto config : list) {
             String method = config.getMethod();
             String url = config.getUrl();
             if (url.contains("{")) {
