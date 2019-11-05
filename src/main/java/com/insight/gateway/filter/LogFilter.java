@@ -10,12 +10,17 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.server.HandlerStrategies;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -73,23 +78,56 @@ public class LogFilter implements GlobalFilter, Ordered {
         log.setParams(params.isEmpty() ? null : params.toSingleValueMap());
 
         // 如请求方法为GET,则打印日志后结束
-        if (method.matches("GET")) {
+        MediaType contentType = headers.getContentType();
+        if (method.matches("GET") || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
             logger.info("请求参数: {}", Json.toJson(log));
 
             return chain.filter(exchange);
         }
 
-        Flux<DataBuffer> body = request.getBody();
-        boolean isMatch = Pattern.matches("^[{|\\[].*[}|\\]]$", body.toString());
-        if (isMatch) {
-            Map bodyMap = Json.toMap(body.toString());
-            log.setBody(bodyMap == null ? body.toString() : bodyMap);
-        } else {
-            log.setBody(body.toString());
-        }
+        return readBody(exchange, chain, log);
+    }
 
-        logger.info("请求参数：{}", Json.toJson(log));
-        return chain.filter(exchange);
+    /**
+     * 输出请求体
+     *
+     * @param exchange ServerWebExchange
+     * @param chain    GatewayFilterChain
+     * @param log      日志DTO
+     * @return Mono
+     */
+    private Mono<Void> readBody(ServerWebExchange exchange, GatewayFilterChain chain, LogDto log) {
+        return DataBufferUtils.join(exchange.getRequest().getBody()).flatMap(dataBuffer -> {
+            byte[] bytes = new byte[dataBuffer.readableByteCount()];
+            dataBuffer.read(bytes);
+            DataBufferUtils.release(dataBuffer);
+
+            // 重新构造请求
+            ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
+                @Override
+                public Flux<DataBuffer> getBody() {
+                    return Flux.defer(() -> {
+                        DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+                        DataBufferUtils.retain(buffer);
+
+                        return Mono.just(buffer);
+                    });
+                }
+            };
+
+            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+            return ServerRequest.create(mutatedExchange, HandlerStrategies.withDefaults().messageReaders()).bodyToMono(String.class).doOnNext(body -> {
+                boolean isJson = Pattern.matches("^[{|\\[].*[}|\\]]$", body);
+                if (isJson) {
+                    Map obj = Json.toMap(body);
+                    log.setBody(obj == null ? body : obj);
+                } else {
+                    log.setBody(body);
+                }
+
+                logger.info("请求参数：{}", Json.toJson(log));
+            }).then(chain.filter(mutatedExchange));
+        });
     }
 
     /**

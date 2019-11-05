@@ -8,7 +8,6 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.stereotype.Component;
@@ -39,12 +38,13 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpResponse originalResponse = exchange.getResponse();
-        ServerHttpResponseDecorator decoratedResponse = new ServerHttpResponseDecorator(originalResponse) {
+        ServerHttpResponseDecorator responseDecorator = new ServerHttpResponseDecorator(originalResponse) {
 
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-                if (getStatusCode().equals(HttpStatus.OK) && body instanceof Flux) {
+                if (body instanceof Flux) {
                     Flux<? extends DataBuffer> fluxBody = Flux.from(body);
+
                     return super.writeWith(fluxBody.buffer().map(dataBuffers -> {
                         List<String> list = new ArrayList<>();
                         dataBuffers.forEach(dataBuffer -> {
@@ -54,20 +54,18 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
                             list.add(new String(content, StandardCharsets.UTF_8));
                         });
 
-                        String json = "";
-                        for (String i : list) {
-                            json = json + i;
-                        }
-
+                        String json = String.join("", list);
                         logger.info("返回数据: {}", json);
+
                         return bufferFactory().wrap(json.getBytes());
                     }));
                 }
+
                 return super.writeWith(body);
             }
         };
         // replace response with decorator
-        return chain.filter(exchange.mutate().response(decoratedResponse).build());
+        return chain.filter(exchange.mutate().response(responseDecorator).build());
     }
 
     /**
