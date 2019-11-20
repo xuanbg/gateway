@@ -1,8 +1,10 @@
 package com.insight.gateway.filter;
 
+import com.insight.gateway.common.client.AuthClient;
 import com.insight.gateway.common.dto.InterfaceDto;
 import com.insight.gateway.common.Verify;
 import com.insight.util.*;
+import com.insight.util.common.ApplicationContextHolder;
 import com.insight.util.pojo.LoginInfo;
 import com.insight.util.pojo.Reply;
 import org.slf4j.Logger;
@@ -104,10 +106,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
      *
      * @param token       令牌
      * @param fingerprint 用户特征串
-     * @param authCodes   接口授权码
+     * @param authCode    接口授权码
      * @return 是否通过验证
      */
-    private boolean verify(String token, String fingerprint, String authCodes) {
+    private boolean verify(String token, String fingerprint, String authCode) {
         if (token == null || token.isEmpty()) {
             reply = ReplyHelper.invalidToken();
 
@@ -115,7 +117,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         Verify verify = new Verify(token, fingerprint);
-        reply = verify.compare(authCodes);
+        reply = verify.compare(authCode);
         if (!reply.getSuccess()) {
             return false;
         }
@@ -226,7 +228,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         DataBuffer body = response.bufferFactory().wrap(json.getBytes());
 
         Long startTime = exchange.getAttribute(COUNT_START_TIME);
-        if (startTime != null){
+        if (startTime != null) {
             long duration = (System.currentTimeMillis() - startTime);
             logger.info("处理时间: {} ms", duration);
         }

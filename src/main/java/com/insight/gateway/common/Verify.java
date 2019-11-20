@@ -1,13 +1,19 @@
 package com.insight.gateway.common;
 
+import com.insight.gateway.common.client.AuthClient;
 import com.insight.util.Json;
 import com.insight.util.Redis;
 import com.insight.util.ReplyHelper;
 import com.insight.util.Util;
-import com.insight.util.pojo.*;
+import com.insight.util.common.ApplicationContextHolder;
+import com.insight.util.pojo.AccessToken;
+import com.insight.util.pojo.Reply;
+import com.insight.util.pojo.TokenInfo;
+import com.insight.util.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -61,7 +67,7 @@ public class Verify {
 
         tokenId = accessToken.getId();
         basis = getToken();
-        if (basis == null){
+        if (basis == null) {
             return;
         }
 
@@ -72,10 +78,10 @@ public class Verify {
     /**
      * 验证Token合法性
      *
-     * @param authCodes 接口授权码
+     * @param authCode 接口授权码
      * @return Reply Token验证结果
      */
-    public Reply compare(String authCodes) {
+    public Reply compare(String authCode) {
         if (basis == null) {
             return ReplyHelper.invalidToken();
         }
@@ -94,7 +100,7 @@ public class Verify {
             return ReplyHelper.invalidToken();
         }
 
-        if (basis.isExpiry(true)) {
+        if (basis.isExpiry()) {
             return ReplyHelper.expiredToken();
         }
 
@@ -103,17 +109,17 @@ public class Verify {
         }
 
         // 无需鉴权,返回成功
-        if (authCodes == null || authCodes.isEmpty()) {
+        if (authCode == null || authCode.isEmpty()) {
             return ReplyHelper.success();
         }
 
         // 进行鉴权,返回鉴权结果
-        if (isPermit(authCodes)) {
+        if (isPermit(authCode)) {
             return ReplyHelper.success();
         }
 
         String account = user.getAccount();
-        logger.warn("用户『" + account + "』试图使用未授权的功能:" + authCodes);
+        logger.warn("用户『" + account + "』试图使用未授权的功能:" + authCode);
 
         return ReplyHelper.noAuth();
     }
@@ -224,19 +230,31 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
+        AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
+        LocalDateTime expiry = basis.getPermitTime().plusSeconds(basis.getPermitLife() / 1000);
+        if (LocalDateTime.now().isAfter(expiry)) {
+            try {
+                Reply reply = client.getPermits(Json.toBase64(this));
+                if (reply.getSuccess()) {
+                    List<String> list = Json.cloneList(reply.getData(), String.class);
+                    basis.setPermitFuncs(list);
+                    basis.setPermitTime(LocalDateTime.now());
+
+                    String json = Json.toJson(basis);
+                    Redis.set("Token:" + tokenId, json);
+                } else {
+                    logger.warn(reply.getMessage());
+                }
+            } catch (Exception ex) {
+                logger.warn(ex.getMessage());
+            }
+        }
+
         List<String> functions = basis.getPermitFuncs();
         if (functions == null) {
             return false;
         }
 
-        return functions.stream().anyMatch(i -> {
-            String[] codes = i.split(",");
-            for (String code : codes) {
-                if (authCode.equalsIgnoreCase(code)) {
-                    return true;
-                }
-            }
-            return false;
-        });
+        return functions.stream().anyMatch(authCode::equalsIgnoreCase);
     }
 }
