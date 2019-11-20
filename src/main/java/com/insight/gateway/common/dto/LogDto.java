@@ -1,7 +1,6 @@
 package com.insight.gateway.common.dto;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -16,16 +15,6 @@ public class LogDto implements Serializable {
      * 请求ID
      */
     private String requestId;
-
-    /**
-     * 日志时间
-     */
-    private LocalDateTime time;
-
-    /**
-     * 日志级别(DEBUG,INFO,WARN,ERROR)
-     */
-    private String level;
 
     /**
      * 来源IP
@@ -63,22 +52,6 @@ public class LogDto implements Serializable {
 
     public void setRequestId(String requestId) {
         this.requestId = requestId;
-    }
-
-    public LocalDateTime getTime() {
-        return time;
-    }
-
-    public void setTime(LocalDateTime time) {
-        this.time = time;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
     }
 
     public String getSource() {

@@ -25,7 +25,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -48,11 +47,6 @@ public class LogFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        LogDto log = new LogDto();
-        log.setTime(LocalDateTime.now());
-        log.setLevel("INFO");
-
-        // 读取客户端IP地址、请求方法和调用的接口URL
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
         HttpMethod method = request.getMethod();
@@ -64,14 +58,14 @@ public class LogFilter implements GlobalFilter, Ordered {
 
         String requestId = Generator.uuid();
         String fingerprint = Util.md5(source + headers.getFirst("user-agent"));
-        request.mutate().header("fingerprint", fingerprint).build();
-        request.mutate().header("requestId", requestId).build();
-
+        LogDto log = new LogDto();
         log.setRequestId(requestId);
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());
         log.setHeaders(headers.toSingleValueMap());
+        request.mutate().header("requestId", requestId).build();
+        request.mutate().header("fingerprint", fingerprint).build();
 
         // 读取请求参数
         MultiValueMap<String, String> params = request.getQueryParams();
