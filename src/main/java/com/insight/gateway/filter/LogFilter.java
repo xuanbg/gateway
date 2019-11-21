@@ -72,8 +72,9 @@ public class LogFilter implements GlobalFilter, Ordered {
         log.setParams(params.isEmpty() ? null : params.toSingleValueMap());
 
         // 如请求方法为GET,则打印日志后结束
+        long length = headers.getContentLength();
         MediaType contentType = headers.getContentType();
-        if (method.matches("GET") || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
+        if (length <= 0 || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
             logger.info("请求参数: {}", Json.toJson(log));
 
             return chain.filter(exchange);
@@ -91,7 +92,8 @@ public class LogFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     private Mono<Void> readBody(ServerWebExchange exchange, GatewayFilterChain chain, LogDto log) {
-        return DataBufferUtils.join(exchange.getRequest().getBody()).flatMap(dataBuffer -> {
+        Flux<DataBuffer> dataBufferFlux = exchange.getRequest().getBody();
+        return DataBufferUtils.join(dataBufferFlux).flatMap(dataBuffer -> {
             byte[] bytes = new byte[dataBuffer.readableByteCount()];
             dataBuffer.read(bytes);
             DataBufferUtils.release(dataBuffer);
