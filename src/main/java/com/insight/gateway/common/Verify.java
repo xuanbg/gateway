@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author 宣炳刚
@@ -241,7 +242,9 @@ public class Verify {
                     basis.setPermitTime(LocalDateTime.now());
 
                     String json = Json.toJson(basis);
-                    Redis.set("Token:" + tokenId, json);
+                    String key = "Token:" + tokenId;
+                    long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
+                    Redis.set(key, json, expire, TimeUnit.MILLISECONDS);
                 } else {
                     logger.warn(reply.getMessage());
                 }
