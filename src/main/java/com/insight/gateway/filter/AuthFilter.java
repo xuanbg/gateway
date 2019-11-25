@@ -1,10 +1,8 @@
 package com.insight.gateway.filter;
 
-import com.insight.gateway.common.client.AuthClient;
-import com.insight.gateway.common.dto.InterfaceDto;
 import com.insight.gateway.common.Verify;
+import com.insight.gateway.common.dto.InterfaceDto;
 import com.insight.util.*;
-import com.insight.util.common.ApplicationContextHolder;
 import com.insight.util.pojo.LoginInfo;
 import com.insight.util.pojo.Reply;
 import org.slf4j.Logger;
@@ -77,6 +75,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 验证及鉴权
+        Boolean isLogResult  = config.getLogResult();
+        exchange.getAttributes().put("logResult", isLogResult == null ? false : isLogResult);
         if (!config.getVerify()) {
             return chain.filter(exchange);
         }
@@ -224,7 +224,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         //设置body
         String json = Json.toJson(reply);
-        logger.info("返回数据: {}", json);
+        logger.warn("返回数据: {}", json);
         DataBuffer body = response.bufferFactory().wrap(json.getBytes());
 
         Long startTime = exchange.getAttribute(COUNT_START_TIME);

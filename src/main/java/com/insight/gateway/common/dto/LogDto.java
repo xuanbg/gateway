@@ -1,5 +1,7 @@
 package com.insight.gateway.common.dto;
 
+import com.insight.util.Json;
+
 import java.io.Serializable;
 import java.util.Map;
 
@@ -100,5 +102,10 @@ public class LogDto implements Serializable {
 
     public void setBody(Object body) {
         this.body = body;
+    }
+
+    @Override
+    public String toString() {
+        return Json.toJson(this);
     }
 }

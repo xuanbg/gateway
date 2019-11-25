@@ -42,6 +42,11 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
 
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
+                Boolean logResult = exchange.getAttribute("logResult");
+                if (logResult == null || !logResult) {
+                    return super.writeWith(body);
+                }
+
                 if (body instanceof Flux) {
                     Flux<? extends DataBuffer> fluxBody = Flux.from(body);
 

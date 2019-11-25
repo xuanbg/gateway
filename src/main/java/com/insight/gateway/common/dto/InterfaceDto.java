@@ -1,5 +1,7 @@
 package com.insight.gateway.common.dto;
 
+import com.insight.util.Json;
+
 /**
  * @author 宣炳刚
  * @date 2019-08-29
@@ -56,6 +58,11 @@ public class InterfaceDto {
      * 是否限流
      */
     private Boolean isLimit;
+
+    /**
+     * 是否通过日志输出返回值
+     */
+    private Boolean isLogResult;
 
     public String getMethod() {
         return method;
@@ -135,5 +142,18 @@ public class InterfaceDto {
 
     public void setLimit(Boolean limit) {
         isLimit = limit;
+    }
+
+    public Boolean getLogResult() {
+        return isLogResult;
+    }
+
+    public void setLogResult(Boolean logResult) {
+        isLogResult = logResult;
+    }
+
+    @Override
+    public String toString() {
+        return Json.toJson(this);
     }
 }
