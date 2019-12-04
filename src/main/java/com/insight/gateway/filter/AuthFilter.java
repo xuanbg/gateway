@@ -196,7 +196,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 读取访问次数,如次数超过限制,返回true,否则访问次数增加1次
-        Integer count = Integer.valueOf(val);
+        int count = Integer.parseInt(val);
         long expire = Redis.getExpire(key, TimeUnit.SECONDS);
         if (count > max) {
             reply = ReplyHelper.tooOften(msg);
@@ -204,7 +204,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         count++;
-        Redis.set(key, count.toString(), expire, TimeUnit.SECONDS);
+        Redis.set(key, Integer.toString(count), expire, TimeUnit.SECONDS);
 
         return false;
     }

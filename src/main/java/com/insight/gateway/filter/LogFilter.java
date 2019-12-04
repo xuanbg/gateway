@@ -76,7 +76,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         long length = headers.getContentLength();
         MediaType contentType = headers.getContentType();
         if (length <= 0 || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
-            logger.info("请求参数: {}", Json.toJson(log));
+            logger.info("请求参数: {}", log.toString());
 
             return chain.filter(exchange);
         }
