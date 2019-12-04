@@ -25,6 +25,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -113,15 +114,17 @@ public class LogFilter implements GlobalFilter, Ordered {
 
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, HandlerStrategies.withDefaults().messageReaders()).bodyToMono(String.class).doOnNext(body -> {
-                boolean isJson = Pattern.matches("^[{|\\[].*[}|\\]]$", body);
-                if (isJson) {
+                if (Pattern.matches("^\\[.*]$", body)) {
+                    List<Object> list = Json.toList(body, Object.class);
+                    log.setBody(list == null ? body : list);
+                } else if (Pattern.matches("^\\{.*}$", body)) {
                     Map obj = Json.toMap(body);
                     log.setBody(obj == null ? body : obj);
                 } else {
                     log.setBody(body);
                 }
 
-                logger.info("请求参数：{}", Json.toJson(log));
+                logger.info("请求参数：{}", log.toString());
             }).then(chain.filter(mutatedExchange));
         });
     }
