@@ -17,8 +17,9 @@ public interface AuthClient {
     /**
      * 获取用户授权码
      *
+     * @param info 用户关键信息
      * @return Reply
      */
-    @GetMapping("/base/auth//v1.0/tokens/permits")
-    Reply getPermits(@RequestHeader("loginInfo") String loginInfo);
+    @GetMapping("/base/auth/v1.0/tokens/permits")
+    Reply getPermits(@RequestHeader("loginInfo") String info);
 }
