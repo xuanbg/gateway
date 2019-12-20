@@ -60,7 +60,7 @@ spring:
             - StripPrefix=0
           predicates:
             - Path=/base/auth/**
-jackson:
+  jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   redis:
