@@ -24,12 +24,12 @@ spring:
             - StripPrefix=0
           predicates:
             - Path=/base/pay/**
-        - id: base-auth
-          uri: lb://base-auth
+        - id: base-app
+          uri: lb://base-app
           filters:
             - StripPrefix=0
           predicates:
-            - Path=/base/auth/**
+            - Path=/base/app/**
         - id: base-user
           uri: lb://base-user
           filters:
@@ -54,7 +54,13 @@ spring:
             - StripPrefix=0
           predicates:
             - Path=/base/role/**
-  jackson:
+        - id: base-auth
+          uri: lb://base-auth
+          filters:
+            - StripPrefix=0
+          predicates:
+            - Path=/base/auth/**
+jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   redis:
