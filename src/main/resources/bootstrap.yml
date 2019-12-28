@@ -1,0 +1,23 @@
+spring:
+  profiles:
+    active: dev
+---
+spring:
+  profiles: dev
+  application:
+    name: common-gateway
+  cloud:
+    config:
+      uri: http://192.168.236.8:6101
+      label: master
+      profile: dev
+---
+spring:
+  profiles: pro
+  application:
+    name: common-gateway
+  cloud:
+    config:
+      uri: http://192.168.236.8:6101
+      label: master
+      profile: pro
