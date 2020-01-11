@@ -13,6 +13,26 @@ spring:
       profile: dev
 ---
 spring:
+  profiles: test
+  application:
+    name: common-gateway
+  cloud:
+    config:
+      uri: http://192.168.236.8:6101
+      label: master
+      profile: test
+---
+spring:
+  profiles: ptr
+  application:
+    name: common-gateway
+  cloud:
+    config:
+      uri: http://192.168.236.8:6101
+      label: master
+      profile: ptr
+---
+spring:
   profiles: pro
   application:
     name: common-gateway
