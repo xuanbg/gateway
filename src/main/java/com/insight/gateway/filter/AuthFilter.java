@@ -1,8 +1,8 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.Verify;
-import com.insight.gateway.common.dto.InterfaceDto;
 import com.insight.util.*;
+import com.insight.util.pojo.InterfaceDto;
 import com.insight.util.pojo.LoginInfo;
 import com.insight.util.pojo.Reply;
 import org.slf4j.Logger;
@@ -64,10 +64,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 接口限流
+        String key = method + ":" + path;
         HttpHeaders headers = request.getHeaders();
         String fingerprint = headers.getFirst("fingerprint");
         if (config.getLimit()) {
-            String key = method + ":" + path;
             String limitKey = Util.md5(fingerprint + "|" + key);
             if (isLimited(limitKey, config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
                 return initResponse(exchange);
@@ -75,7 +75,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 验证及鉴权
-        Boolean isLogResult  = config.getLogResult();
+        Boolean isLogResult = config.getLogResult();
         exchange.getAttributes().put("logResult", isLogResult == null ? false : isLogResult);
         if (!config.getVerify()) {
             return chain.filter(exchange);
@@ -85,6 +85,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
         boolean isVerified = verify(token, fingerprint, config.getAuthCode());
         if (!isVerified) {
             return initResponse(exchange);
+        }
+
+        // 验证提交数据临时Token
+        if (config.getNeedToken()) {
+            String redisKey = Util.md5(loginInfo.getUserId() + ":" + key);
+            String submitToken = headers.getFirst("SubmitToken");
+            String id = Redis.get(redisKey);
+            if (id == null || id.isEmpty() || !id.equals(submitToken)) {
+                reply = ReplyHelper.fail("SubmitToken不存在");
+                return initResponse(exchange);
+            } else {
+                Redis.deleteKey(redisKey);
+            }
         }
 
         request.mutate().header("loginInfo", loginInfo.toString()).build();
