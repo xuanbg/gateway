@@ -89,7 +89,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 验证提交数据临时Token
         if (config.getNeedToken()) {
-            String redisKey = Util.md5(loginInfo.getUserId() + ":" + key);
+            String redisKey = "SubmitToken:" + Util.md5(loginInfo.getUserId() + ":" + key);
             String submitToken = headers.getFirst("SubmitToken");
             String id = Redis.get(redisKey);
             if (id == null || id.isEmpty() || !id.equals(submitToken)) {
