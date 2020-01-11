@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: dev
+    active: pro
 ---
 spring:
   profiles: dev
