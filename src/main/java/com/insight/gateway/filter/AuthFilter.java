@@ -149,9 +149,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        Integer max = config.getLimitMax();
-        if (max == null || max.equals(0)) {
-            return false;
+        String limitKey = Util.md5(fingerprint + "|" + key);
+        if (isLimited(limitKey, gap)) {
+            return true;
         }
 
         Integer cycle = config.getLimitCycle();
@@ -159,10 +159,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        String limitKey = Util.md5(fingerprint + "|" + key);
-        String msg = config.getMessage();
+        Integer max = config.getLimitMax();
+        if (max == null || max.equals(0)) {
+            return false;
+        }
 
-        return isLimited(limitKey, gap) || isLimited(limitKey, cycle, max, msg);
+        return isLimited(limitKey, cycle, max, config.getMessage());
     }
 
     /**
