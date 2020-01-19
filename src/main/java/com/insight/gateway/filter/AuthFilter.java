@@ -140,15 +140,27 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否被限流
      */
     private boolean isLimited(InterfaceDto config, String fingerprint, String key) {
-        if (!config.getLimit()) {
+        if (!config.getLimit() || key == null || key.isEmpty()) {
+            return false;
+        }
+
+        Integer gap = config.getLimitGap();
+        if (gap == null || gap.equals(0)) {
+            return false;
+        }
+
+        Integer max = config.getLimitMax();
+        if (max == null || max.equals(0)) {
+            return false;
+        }
+
+        Integer cycle = config.getLimitCycle();
+        if (cycle == null || cycle.equals(0)) {
             return false;
         }
 
         String limitKey = Util.md5(fingerprint + "|" + key);
         String msg = config.getMessage();
-        int gap = config.getLimitGap();
-        int cycle = config.getLimitCycle();
-        int max = config.getLimitMax();
 
         return isLimited(limitKey, gap) || isLimited(limitKey, cycle, max, msg);
     }
@@ -161,10 +173,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否限制访问
      */
     private boolean isLimited(String key, Integer gap) {
-        if (key == null || key.isEmpty() || gap == null || gap.equals(0)) {
-            return false;
-        }
-
         key = "Surplus:" + key;
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
@@ -195,11 +203,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否限制访问
      */
     private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
-        if (key == null || key.isEmpty() || cycle == null || cycle.equals(0) || max == null || max.equals(0)) {
-            return false;
-        }
-
-        // 如记录不存在,则记录访问次数为1
         key = "Limit:" + key;
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
