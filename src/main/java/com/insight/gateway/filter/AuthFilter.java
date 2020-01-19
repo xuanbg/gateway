@@ -63,27 +63,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return initResponse(exchange);
         }
 
-        // 接口限流
+        // 验证及鉴权
         String key = method + ":" + path;
         HttpHeaders headers = request.getHeaders();
         String fingerprint = headers.getFirst("fingerprint");
-        if (config.getLimit()) {
-            String limitKey = Util.md5(fingerprint + "|" + key);
-            if (isLimited(limitKey, config.getLimitGap(), config.getLimitCycle(), config.getLimitMax(), config.getMessage())) {
-                return initResponse(exchange);
-            }
-        }
-
-        // 验证及鉴权
         Boolean isLogResult = config.getLogResult();
         exchange.getAttributes().put("logResult", isLogResult == null ? false : isLogResult);
         if (!config.getVerify()) {
-            return chain.filter(exchange);
+            return isLimited(config, fingerprint, key) ? initResponse(exchange) : chain.filter(exchange);
         }
 
         String token = headers.getFirst("Authorization");
         boolean isVerified = verify(token, fingerprint, config.getAuthCode());
-        if (!isVerified) {
+        if (!isVerified || isLimited(config, fingerprint, key)) {
             return initResponse(exchange);
         }
 
@@ -142,15 +134,23 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 是否被限流
      *
-     * @param key   键值
-     * @param gap   访问最小时间间隔(秒)
-     * @param cycle 限流计时周期(秒)
-     * @param max   限制次数/限流周期
-     * @param msg   消息
-     * @return 是否限制访问
+     * @param config      接口配置表
+     * @param fingerprint 用户特征串
+     * @param key         键值
+     * @return 是否被限流
      */
-    private boolean isLimited(String key, Integer gap, Integer cycle, Integer max, String msg) {
-        return isLimited(key, gap) || isLimited(key, cycle, max, msg);
+    private boolean isLimited(InterfaceDto config, String fingerprint, String key) {
+        if (!config.getLimit()) {
+            return false;
+        }
+
+        String limitKey = Util.md5(fingerprint + "|" + key);
+        String msg = config.getMessage();
+        int gap = config.getLimitGap();
+        int cycle = config.getLimitCycle();
+        int max = config.getLimitMax();
+
+        return isLimited(limitKey, gap) || isLimited(limitKey, cycle, max, msg);
     }
 
     /**
