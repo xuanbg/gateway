@@ -116,7 +116,7 @@ public class Verify {
         }
 
         if (isLoginElsewhere()) {
-            return ReplyHelper.fail("用户已在其他设备登录");
+            return ReplyHelper.fail("您的账号已在其他设备登录");
         }
 
         // 验证令牌
