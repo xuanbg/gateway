@@ -31,7 +31,7 @@ public class DurationFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put(COUNT_START_TIME, System.currentTimeMillis());
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
             Long startTime = exchange.getAttribute(COUNT_START_TIME);
-            if (startTime == null){
+            if (startTime == null) {
                 return;
             }
 
