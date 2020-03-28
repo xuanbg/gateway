@@ -215,14 +215,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 读取访问次数,如次数超过限制,返回true,否则访问次数增加1次
         int count = Integer.parseInt(val);
-        long expire = Redis.getExpire(key, TimeUnit.SECONDS);
         if (count > max) {
             reply = ReplyHelper.tooOften(msg);
             return true;
         }
 
         count++;
-        Redis.set(key, Integer.toString(count), expire, TimeUnit.SECONDS);
+        long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
+        Redis.set(key, Integer.toString(count), expire, TimeUnit.MILLISECONDS);
 
         return false;
     }
