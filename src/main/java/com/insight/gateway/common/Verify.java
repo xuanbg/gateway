@@ -176,15 +176,6 @@ public class Verify {
     }
 
     /**
-     * 获取令牌持有人的部门ID
-     *
-     * @return 部门ID
-     */
-    public String getDeptId() {
-        return basis.getDeptId();
-    }
-
-    /**
      * 获取令牌持有人的用户ID
      *
      * @return 用户ID
