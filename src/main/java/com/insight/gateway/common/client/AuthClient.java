@@ -1,7 +1,7 @@
 package com.insight.gateway.common.client;
 
 import com.insight.gateway.common.config.FeignClientConfig;
-import com.insight.util.pojo.Reply;
+import com.insight.utils.pojo.Reply;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;

@@ -1,10 +1,10 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.Verify;
-import com.insight.util.*;
-import com.insight.util.pojo.InterfaceDto;
-import com.insight.util.pojo.LoginInfo;
-import com.insight.util.pojo.Reply;
+import com.insight.utils.*;
+import com.insight.utils.pojo.InterfaceDto;
+import com.insight.utils.pojo.LoginInfo;
+import com.insight.utils.pojo.Reply;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;

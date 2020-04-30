@@ -1,15 +1,15 @@
 package com.insight.gateway.common;
 
 import com.insight.gateway.common.client.AuthClient;
-import com.insight.util.Json;
-import com.insight.util.Redis;
-import com.insight.util.ReplyHelper;
-import com.insight.util.Util;
-import com.insight.util.common.ApplicationContextHolder;
-import com.insight.util.pojo.AccessToken;
-import com.insight.util.pojo.Reply;
-import com.insight.util.pojo.TokenInfo;
-import com.insight.util.pojo.User;
+import com.insight.utils.Json;
+import com.insight.utils.Redis;
+import com.insight.utils.ReplyHelper;
+import com.insight.utils.Util;
+import com.insight.utils.common.ApplicationContextHolder;
+import com.insight.utils.pojo.AccessToken;
+import com.insight.utils.pojo.Reply;
+import com.insight.utils.pojo.TokenInfo;
+import com.insight.utils.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +73,8 @@ public class Verify {
         }
 
         userId = basis.getUserId();
-        user = Redis.get("User:" + userId, User.class);
+        String json = Redis.get("User:" + userId);
+        user = Json.toBean(json, User.class);
         if (!basis.getAutoRefresh()) {
             return;
         }

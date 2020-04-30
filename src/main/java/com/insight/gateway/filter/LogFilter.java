@@ -1,9 +1,8 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.dto.LogDto;
-import com.insight.util.Generator;
-import com.insight.util.Json;
-import com.insight.util.Util;
+import com.insight.utils.Json;
+import com.insight.utils.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -57,7 +56,7 @@ public class LogFilter implements GlobalFilter, Ordered {
             source = request.getRemoteAddress().getAddress().getHostAddress();
         }
 
-        String requestId = Generator.uuid();
+        String requestId = Util.uuid();
         String fingerprint = Util.md5(source + headers.getFirst("user-agent"));
         LogDto log = new LogDto();
         log.setRequestId(requestId);
@@ -72,7 +71,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         MultiValueMap<String, String> params = request.getQueryParams();
         log.setParams(params.isEmpty() ? null : params.toSingleValueMap());
 
-        // 如请求方法为GET,则打印日志后结束
+        // 如请求方法为GET或Body为空或Body不是Json,则打印日志后结束
         long length = headers.getContentLength();
         MediaType contentType = headers.getContentType();
         if (length <= 0 || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {

@@ -1,6 +1,6 @@
 package com.insight.gateway.common.dto;
 
-import com.insight.util.Json;
+import com.insight.utils.Json;
 
 import java.io.Serializable;
 import java.util.Map;
