@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,8 +74,8 @@ public class Verify {
         }
 
         userId = basis.getUserId();
-        String json = Redis.get("User:" + userId);
-        user = Json.toBean(json, User.class);
+        Map<Object, Object> map = Redis.getEntity("User:" + userId);
+        user = Json.clone(map, User.class);
         if (!basis.getAutoRefresh()) {
             return;
         }
