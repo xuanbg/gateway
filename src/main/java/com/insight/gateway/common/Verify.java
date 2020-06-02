@@ -247,10 +247,10 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
         LocalDateTime expiry = basis.getPermitTime().plusSeconds(basis.getPermitLife() / 1000);
         if (LocalDateTime.now().isAfter(expiry)) {
             try {
+                AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
                 Reply reply = client.getPermits(Json.toBase64(this));
                 if (reply.getSuccess()) {
                     List<String> list = Json.cloneList(reply.getData(), String.class);
