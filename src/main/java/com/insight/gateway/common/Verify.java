@@ -122,17 +122,17 @@ public class Verify {
         }
 
         // 验证令牌
-        if (!basis.verifyToken(hash)) {
-            return ReplyHelper.invalidToken();
-        }
-
-        if (basis.isExpiry()) {
-            return ReplyHelper.expiredToken();
-        }
-
-        if (basis.isFailure()) {
-            return ReplyHelper.invalidToken();
-        }
+//        if (!basis.verifyToken(hash)) {
+//            return ReplyHelper.invalidToken();
+//        }
+//
+//        if (basis.isExpiry()) {
+//            return ReplyHelper.expiredToken();
+//        }
+//
+//        if (basis.isFailure()) {
+//            return ReplyHelper.invalidToken();
+//        }
 
         // 无需鉴权,返回成功
         if (authCode == null || authCode.isEmpty()) {
@@ -284,7 +284,7 @@ public class Verify {
     private List<String> getPermits() {
         AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
         try {
-            Reply reply = client.getPermits();
+            Reply reply = client.getPermits(Json.toBase64(this));
             if (reply.getSuccess()) {
                 logger.info(reply.getData().toString());
                 return Json.cloneList(reply.getData(), String.class);
