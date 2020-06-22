@@ -247,32 +247,54 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        LocalDateTime expiry = basis.getPermitTime().plusSeconds(basis.getPermitLife() / 1000);
-        if (LocalDateTime.now().isAfter(expiry)) {
-            try {
-                AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
-                Reply reply = client.getPermits(Json.toBase64(this));
-                if (reply.getSuccess()) {
-                    List<String> list = Json.cloneList(reply.getData(), String.class);
-                    basis.setPermitFuncs(list);
-                    basis.setPermitTime(LocalDateTime.now());
-
-                    String key = "Token:" + tokenId;
-                    long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
-                    Redis.set(key, basis.toString(), expire, TimeUnit.MILLISECONDS);
-                } else {
-                    logger.warn(reply.getMessage());
-                }
-            } catch (Exception ex) {
-                logger.warn(ex.getMessage());
+        Long permitLife = basis.getPermitLife();
+        if (permitLife == null || permitLife == 0) {
+            List<String> permits = getPermits();
+            if (permits == null) {
+                return false;
             }
+
+            return permits.stream().anyMatch(authCode::equalsIgnoreCase);
         }
 
-        List<String> functions = basis.getPermitFuncs();
-        if (functions == null) {
-            return false;
+        LocalDateTime expiry = basis.getPermitTime().plusSeconds(permitLife / 1000);
+        List<String> permits = basis.getPermitFuncs();
+        if (LocalDateTime.now().isAfter(expiry) || permits == null) {
+            permits = getPermits();
+            if (permits == null) {
+                return false;
+            }
+
+            basis.setPermitFuncs(permits);
+            basis.setPermitTime(LocalDateTime.now());
+
+            String key = "Token:" + tokenId;
+            long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
+            Redis.set(key, basis.toString(), expire, TimeUnit.MILLISECONDS);
         }
 
-        return functions.stream().anyMatch(authCode::equalsIgnoreCase);
+        return permits.stream().anyMatch(authCode::equalsIgnoreCase);
+    }
+
+    /**
+     * 获取用户权限集合
+     *
+     * @return 权限集合
+     */
+    private List<String> getPermits() {
+        AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
+        try {
+            Reply reply = client.getPermits();
+            if (reply.getSuccess()) {
+                logger.info(reply.getData().toString());
+                return Json.cloneList(reply.getData(), String.class);
+            } else {
+                logger.warn(reply.getMessage());
+                return null;
+            }
+        } catch (Exception ex) {
+            logger.warn(ex.getMessage());
+            return null;
+        }
     }
 }

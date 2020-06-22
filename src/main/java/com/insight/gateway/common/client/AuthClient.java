@@ -4,7 +4,6 @@ import com.insight.gateway.common.config.FeignClientConfig;
 import com.insight.utils.pojo.Reply;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 /**
  * @author 宣炳刚
@@ -21,5 +20,5 @@ public interface AuthClient {
      * @return Reply
      */
     @GetMapping("/base/auth/v1.0/tokens/permits")
-    Reply getPermits(@RequestHeader("loginInfo") String info);
+    Reply getPermits();
 }
