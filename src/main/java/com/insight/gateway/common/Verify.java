@@ -122,17 +122,17 @@ public class Verify {
         }
 
         // 验证令牌
-//        if (!basis.verifyToken(hash)) {
-//            return ReplyHelper.invalidToken();
-//        }
-//
-//        if (basis.isExpiry()) {
-//            return ReplyHelper.expiredToken();
-//        }
-//
-//        if (basis.isFailure()) {
-//            return ReplyHelper.invalidToken();
-//        }
+        if (!basis.verifyToken(hash)) {
+            return ReplyHelper.invalidToken();
+        }
+
+        if (basis.isExpiry()) {
+            return ReplyHelper.expiredToken();
+        }
+
+        if (basis.isFailure()) {
+            return ReplyHelper.invalidToken();
+        }
 
         // 无需鉴权,返回成功
         if (authCode == null || authCode.isEmpty()) {
