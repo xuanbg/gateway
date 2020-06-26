@@ -1,15 +1,11 @@
 package com.insight.gateway.common;
 
-import com.insight.gateway.common.client.AuthClient;
 import com.insight.utils.Json;
 import com.insight.utils.Redis;
 import com.insight.utils.ReplyHelper;
 import com.insight.utils.Util;
 import com.insight.utils.common.ApplicationContextHolder;
-import com.insight.utils.pojo.AccessToken;
-import com.insight.utils.pojo.Reply;
-import com.insight.utils.pojo.TokenInfo;
-import com.insight.utils.pojo.User;
+import com.insight.utils.pojo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Core core = ApplicationContextHolder.getContext().getBean(Core.class);
 
     /**
      * 令牌哈希值
@@ -247,9 +244,10 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
+        LoginInfo info = Json.clone(this, LoginInfo.class);
         Long permitLife = basis.getPermitLife();
         if (permitLife == null || permitLife == 0) {
-            List<String> permits = getPermits();
+            List<String> permits = core.getPermits(info);
             if (permits == null) {
                 return false;
             }
@@ -260,7 +258,7 @@ public class Verify {
         LocalDateTime expiry = basis.getPermitTime().plusSeconds(permitLife / 1000);
         List<String> permits = basis.getPermitFuncs();
         if (LocalDateTime.now().isAfter(expiry) || permits == null) {
-            permits = getPermits();
+            permits = core.getPermits(info);
             if (permits == null) {
                 return false;
             }
@@ -274,27 +272,5 @@ public class Verify {
         }
 
         return permits.stream().anyMatch(authCode::equalsIgnoreCase);
-    }
-
-    /**
-     * 获取用户权限集合
-     *
-     * @return 权限集合
-     */
-    private List<String> getPermits() {
-        AuthClient client = ApplicationContextHolder.getContext().getBean(AuthClient.class);
-        try {
-            Reply reply = client.getPermits(Json.toBase64(this));
-            if (reply.getSuccess()) {
-                logger.info(reply.getData().toString());
-                return Json.cloneList(reply.getData(), String.class);
-            } else {
-                logger.warn(reply.getMessage());
-                return null;
-            }
-        } catch (Exception ex) {
-            logger.warn(ex.getMessage());
-            return null;
-        }
     }
 }

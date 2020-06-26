@@ -17,7 +17,7 @@
     <properties>
         <java.version>1.8</java.version>
         <spring-boot-admin.version>2.2.3</spring-boot-admin.version>
-        <spring-cloud.version>Hoxton.SR5</spring-cloud.version>
+        <spring-cloud.version>Hoxton.RELEASE</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -39,10 +39,6 @@
             <version>2.2.3</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
@@ -54,6 +50,24 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-ribbon</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.netflix.ribbon</groupId>
+                    <artifactId>ribbon-eureka</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
         <dependency>
             <groupId>com.insight</groupId>
