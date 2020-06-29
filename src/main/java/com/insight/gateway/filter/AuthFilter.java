@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
+    private LocalDateTime flagTime = LocalDateTime.now();
     private List<InterfaceDto> regConfigs = new ArrayList<>();
     private Map<String, InterfaceDto> hashConfigs = new HashMap<>();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -262,6 +264,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置
      */
     private InterfaceDto getConfig(HttpMethod method, String url) {
+        // 刷新缓存
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(flagTime.plusSeconds(60))){
+            flagTime = now;
+            hashConfigs = getHashConfigs();
+            regConfigs = getRegularConfigs();
+        }
+
         // 先进行哈希匹配
         String hash = Util.md5(method.name() + ":" + url);
         if (hashConfigs.containsKey(hash)) {
