@@ -30,6 +30,11 @@ public class Verify {
     private final String hash;
 
     /**
+     * 令牌安全码
+     */
+    private String secret;
+
+    /**
      * 缓存中的令牌信息
      */
     private TokenInfo basis;
@@ -64,6 +69,7 @@ public class Verify {
             return;
         }
 
+        secret = accessToken.getSecret();
         tokenId = accessToken.getId();
         basis = getToken();
         if (basis == null) {
@@ -119,8 +125,14 @@ public class Verify {
         }
 
         // 验证令牌
-        if (!basis.verifyToken(hash)) {
-            return ReplyHelper.invalidToken();
+        if (basis.getVerifySource()) {
+            if (!basis.verifyTokenHash(hash)) {
+                return ReplyHelper.invalidToken();
+            }
+        }else {
+            if (!basis.verifySecretKey(secret)){
+                return ReplyHelper.invalidToken();
+            }
         }
 
         if (basis.isExpiry()) {

@@ -32,23 +32,22 @@ public class LocalDateTimeSerializerConfig {
     @Bean
     public SimpleModule localDateTimeSerializationModule(JacksonProperties jacksonProperties) {
         SimpleModule module = new SimpleModule();
-        module.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(LocalDateTime.class, jacksonProperties.getDateFormat()));
+        module.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(jacksonProperties.getDateFormat()));
 
         return module;
     }
 
     public static class LocalDateTimeSerializer extends StdSerializer<LocalDateTime> {
         private static final long serialVersionUID = 1L;
-        private String dataFormat;
+        private final String dataFormat;
 
         /**
          * 构造方法
          *
-         * @param type       LocalDateTime
          * @param dateFormat 日期格式
          */
-        LocalDateTimeSerializer(Class<LocalDateTime> type, String dateFormat) {
-            super(type);
+        LocalDateTimeSerializer(String dateFormat) {
+            super(LocalDateTime.class);
             this.dataFormat = dateFormat;
         }
 
