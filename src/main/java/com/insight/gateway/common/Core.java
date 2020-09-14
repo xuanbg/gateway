@@ -2,7 +2,6 @@ package com.insight.gateway.common;
 
 import com.insight.gateway.common.client.AuthClient;
 import com.insight.utils.Json;
-import com.insight.utils.pojo.LoginInfo;
 import com.insight.utils.pojo.Reply;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +31,12 @@ public class Core {
     /**
      * 获取用户权限集合
      *
+     * @param info 用户关键信息
      * @return 权限集合
      */
-    public List<String> getPermits(LoginInfo info) {
+    public List<String> getPermits(String info) {
         try {
-            Reply reply = client.getPermits(Json.toBase64(info));
+            Reply reply = client.getPermits(info);
             if (reply.getSuccess()) {
                 logger.info(reply.getData().toString());
                 return Json.cloneList(reply.getData(), String.class);

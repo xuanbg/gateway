@@ -256,21 +256,13 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        LoginInfo info = Json.clone(this, LoginInfo.class);
-        Long permitLife = basis.getPermitLife();
-        if (permitLife == null || permitLife == 0) {
-            List<String> permits = core.getPermits(info);
-            if (permits == null) {
-                return false;
-            }
-
-            return permits.stream().anyMatch(authCode::equalsIgnoreCase);
-        }
-
-        LocalDateTime expiry = basis.getPermitTime().plusSeconds(permitLife / 1000);
         List<String> permits = basis.getPermitFuncs();
+        Long permitLife = basis.getPermitLife();
+        LocalDateTime expiry = basis.getPermitTime().plusSeconds((permitLife == null ? 0L : permitLife) / 1000);
+
+        // 自动刷新授权信息
         if (LocalDateTime.now().isAfter(expiry) || permits == null) {
-            permits = core.getPermits(info);
+            permits = core.getPermits(Json.toBase64(this));
             if (permits == null) {
                 return false;
             }
