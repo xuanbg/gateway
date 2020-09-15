@@ -245,11 +245,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         //设置headers
         HttpHeaders httpHeaders = response.getHeaders();
         httpHeaders.setAccessControlAllowOrigin("*");
-        httpHeaders.setContentLength(data.length);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
         httpHeaders.setDate(System.currentTimeMillis());
-        httpHeaders.add("Transfer-Encoding", "chunked");
-        httpHeaders.add("Vary", "accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding");
 
         return response.writeWith(Flux.just(body));
     }
