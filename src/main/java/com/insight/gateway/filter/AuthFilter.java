@@ -5,18 +5,18 @@ import com.insight.utils.*;
 import com.insight.utils.pojo.InterfaceDto;
 import com.insight.utils.pojo.LoginInfo;
 import com.insight.utils.pojo.Reply;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -34,8 +34,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private LocalDateTime flagTime = LocalDateTime.now();
     private List<InterfaceDto> regConfigs = new ArrayList<>();
     private Map<String, InterfaceDto> hashConfigs = new HashMap<>();
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private static final String COUNT_START_TIME = "StartTime";
 
     /**
      * 令牌持有人信息
@@ -70,7 +68,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         HttpHeaders headers = request.getHeaders();
         String fingerprint = headers.getFirst("fingerprint");
         Boolean isLogResult = config.getLogResult();
-        exchange.getAttributes().put("logResult", isLogResult == null ? false : isLogResult);
+        exchange.getAttributes().put("logResult", isLogResult != null && isLogResult);
         if (!config.getVerify()) {
             return isLimited(config, fingerprint, key) ? initResponse(exchange) : chain.filter(exchange);
         }
@@ -236,24 +234,24 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     private Mono<Void> initResponse(ServerWebExchange exchange) {
-        //设置headers
+        exchange.getAttributes().put("logResult", true);
         ServerHttpResponse response = exchange.getResponse();
-        HttpHeaders httpHeaders = response.getHeaders();
-        httpHeaders.add("Content-Type", "application/json; charset=UTF-8");
-        httpHeaders.add("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
 
         //设置body
         String json = Json.toJson(reply);
-        logger.warn("返回数据: {}", json);
-        DataBuffer body = response.bufferFactory().wrap(json.getBytes());
+        byte[] data = json.getBytes();
+        DataBuffer body = response.bufferFactory().wrap(data);
 
-        Long startTime = exchange.getAttribute(COUNT_START_TIME);
-        if (startTime != null) {
-            long duration = (System.currentTimeMillis() - startTime);
-            logger.info("处理时间: {} ms", duration);
-        }
+        //设置headers
+        HttpHeaders httpHeaders = response.getHeaders();
+        httpHeaders.setAccessControlAllowOrigin("*");
+        httpHeaders.setContentLength(data.length);
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        httpHeaders.setDate(System.currentTimeMillis());
+        httpHeaders.add("Transfer-Encoding", "chunked");
+        httpHeaders.add("Vary", "accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding");
 
-        return response.writeWith(Mono.just(body));
+        return response.writeWith(Flux.just(body));
     }
 
     /**
