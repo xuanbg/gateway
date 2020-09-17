@@ -59,7 +59,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String path = request.getPath().value();
         InterfaceDto config = getConfig(method, path);
         if (config == null) {
-            reply = ReplyHelper.fail("请求的URL不存在");
+            reply = ReplyHelper.fail("不存在的URL: " + method + ":" + path);
             return initResponse(exchange);
         }
 
@@ -261,7 +261,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private InterfaceDto getConfig(HttpMethod method, String url) {
         // 刷新缓存
         LocalDateTime now = LocalDateTime.now();
-        if (now.isAfter(flagTime.plusSeconds(60))){
+        if (now.isAfter(flagTime.plusSeconds(60))) {
             flagTime = now;
             hashConfigs = getHashConfigs();
             regConfigs = getRegularConfigs();

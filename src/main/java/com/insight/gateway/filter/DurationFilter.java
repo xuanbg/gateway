@@ -30,13 +30,14 @@ public class DurationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         exchange.getAttributes().put(COUNT_START_TIME, System.currentTimeMillis());
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+            String requestId = exchange.getAttribute("requestId");
             Long startTime = exchange.getAttribute(COUNT_START_TIME);
             if (startTime == null) {
                 return;
             }
 
             long duration = (System.currentTimeMillis() - startTime);
-            logger.info("处理时间: {} ms", duration);
+            logger.info("requestId: {}. 处理时间: {} ms", requestId, duration);
         }));
     }
 

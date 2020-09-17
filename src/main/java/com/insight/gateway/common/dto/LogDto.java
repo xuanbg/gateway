@@ -14,11 +14,6 @@ public class LogDto implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 请求ID
-     */
-    private String requestId;
-
-    /**
      * 来源IP
      */
     private String source;
@@ -47,14 +42,6 @@ public class LogDto implements Serializable {
      * 请求体数据
      */
     private Object body;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
 
     public String getSource() {
         return source;

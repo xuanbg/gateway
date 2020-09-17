@@ -49,8 +49,6 @@ public class LogFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
-        HttpMethod method = request.getMethod();
-        RequestPath path = request.getPath();
         String source = getIp(headers);
         if (source == null || source.isEmpty()) {
             source = request.getRemoteAddress().getAddress().getHostAddress();
@@ -58,14 +56,18 @@ public class LogFilter implements GlobalFilter, Ordered {
 
         String requestId = Util.uuid();
         String fingerprint = Util.md5(source + headers.getFirst("user-agent"));
+        request.mutate().header("requestId", requestId).build();
+        request.mutate().header("fingerprint", fingerprint).build();
+        exchange.getAttributes().put("requestId", requestId);
+
+        // 构造入参对象
+        HttpMethod method = request.getMethod();
+        RequestPath path = request.getPath();
         LogDto log = new LogDto();
-        log.setRequestId(requestId);
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());
         log.setHeaders(headers.toSingleValueMap());
-        request.mutate().header("requestId", requestId).build();
-        request.mutate().header("fingerprint", fingerprint).build();
 
         // 读取请求参数
         MultiValueMap<String, String> params = request.getQueryParams();
@@ -75,7 +77,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         long length = headers.getContentLength();
         MediaType contentType = headers.getContentType();
         if (length <= 0 || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
-            logger.info("请求参数: {}", log.toString());
+            logger.info("requestId: {}. 请求参数: {}", requestId, log.toString());
 
             return chain.filter(exchange);
         }
@@ -106,7 +108,7 @@ public class LogFilter implements GlobalFilter, Ordered {
                         DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
                         DataBufferUtils.retain(buffer);
 
-                        return Mono.just(buffer);
+                        return Flux.just(buffer);
                     });
                 }
             };
@@ -123,7 +125,8 @@ public class LogFilter implements GlobalFilter, Ordered {
                     log.setBody(body);
                 }
 
-                logger.info("请求参数：{}", log.toString());
+                String requestId = exchange.getAttribute("requestId");
+                logger.info("requestId: {}. 请求参数：{}", requestId, log.toString());
             }).then(chain.filter(mutatedExchange));
         });
     }

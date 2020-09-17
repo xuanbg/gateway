@@ -42,6 +42,7 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
 
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
+                String requestId = exchange.getAttribute("requestId");
                 Boolean logResult = exchange.getAttribute("logResult");
                 if (body instanceof Flux && logResult != null && logResult) {
                     Flux<? extends DataBuffer> fluxBody = Flux.from(body);
@@ -56,7 +57,7 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
                         });
 
                         String json = String.join("", list);
-                        logger.info("返回数据: {}", json);
+                        logger.info("requestId: {}. 返回数据: {}", requestId, json);
 
                         return bufferFactory().wrap(json.getBytes());
                     }));
