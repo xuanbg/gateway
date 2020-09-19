@@ -84,7 +84,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             String redisKey = "SubmitToken:" + Util.md5(loginInfo.getUserId() + ":" + key);
             String submitToken = headers.getFirst("SubmitToken");
             String id = Redis.get(redisKey);
-            if (id == null || id.isBlank() || !id.equals(submitToken)) {
+            if (id == null || id.isEmpty() || !id.equals(submitToken)) {
                 reply = ReplyHelper.fail("SubmitToken不存在");
                 return initResponse(exchange);
             } else {
@@ -115,7 +115,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否通过验证
      */
     private boolean verify(String token, String fingerprint, String authCode) {
-        if (token == null || token.isBlank()) {
+        if (token == null || token.isEmpty()) {
             reply = ReplyHelper.invalidToken();
 
             return false;
@@ -140,7 +140,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否被限流
      */
     private boolean isLimited(InterfaceDto config, String fingerprint, String key) {
-        if (!config.getLimit() || key == null || key.isBlank()) {
+        if (!config.getLimit() || key == null || key.isEmpty()) {
             return false;
         }
 
@@ -177,7 +177,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private boolean isLimited(String key, Integer gap) {
         key = "Surplus:" + key;
         String val = Redis.get(key);
-        if (val == null || val.isBlank()) {
+        if (val == null || val.isEmpty()) {
             Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
 
             return false;
@@ -207,7 +207,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
         key = "Limit:" + key;
         String val = Redis.get(key);
-        if (val == null || val.isBlank()) {
+        if (val == null || val.isEmpty()) {
             Redis.set(key, "1", cycle, TimeUnit.SECONDS);
 
             return false;
@@ -247,7 +247,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         httpHeaders.setAccessControlAllowOrigin("*");
         httpHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
         httpHeaders.setDate(System.currentTimeMillis());
-        httpHeaders.setVary(List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        httpHeaders.setVary(Arrays.asList("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
 
         return response.writeWith(Flux.just(body));
     }

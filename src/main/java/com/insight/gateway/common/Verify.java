@@ -144,7 +144,7 @@ public class Verify {
         }
 
         // 无需鉴权,返回成功
-        if (authCode == null || authCode.isBlank()) {
+        if (authCode == null || authCode.isEmpty()) {
             return ReplyHelper.success();
         }
 

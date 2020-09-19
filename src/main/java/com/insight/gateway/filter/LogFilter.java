@@ -24,6 +24,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,7 +52,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
         String source = getIp(headers);
-        if (source == null || source.isBlank()) {
+        if (source == null || source.isEmpty()) {
             source = request.getRemoteAddress().getAddress().getHostAddress();
         }
 
@@ -62,9 +63,9 @@ public class LogFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put("requestId", requestId);
 
         // 处理请求头
-        List<String> list = List.of("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent", "fingerprint");
+        String[] list = new String[]{"Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent", "fingerprint"};
         Map<String, String> headerMap = headers.toSingleValueMap().entrySet().stream()
-                .filter(e -> list.contains(e.getKey()))
+                .filter(e -> Arrays.stream(list).anyMatch(i -> i.equalsIgnoreCase(e.getKey())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // 构造入参对象
@@ -160,15 +161,15 @@ public class LogFilter implements GlobalFilter, Ordered {
         }
 
         AtomicReference<String> ip = new AtomicReference<>(headers.getFirst("X-Real-IP"));
-        if (ip.get() == null || ip.get().isBlank()) {
+        if (ip.get() == null || ip.get().isEmpty()) {
             ip.set(headers.getFirst("X-Forwarded-For"));
         }
 
-        if (ip.get() == null || ip.get().isBlank()) {
+        if (ip.get() == null || ip.get().isEmpty()) {
             ip.set(headers.getFirst("Proxy-Client-IP"));
         }
 
-        if (ip.get() == null || ip.get().isBlank()) {
+        if (ip.get() == null || ip.get().isEmpty()) {
             ip.set(headers.getFirst("WL-Proxy-Client-IP"));
         }
 
