@@ -245,6 +245,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         //设置headers
         HttpHeaders httpHeaders = response.getHeaders();
         httpHeaders.setAccessControlAllowOrigin("*");
+        //noinspection deprecation
         httpHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
         httpHeaders.setDate(System.currentTimeMillis());
         httpHeaders.setVary(Arrays.asList("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
