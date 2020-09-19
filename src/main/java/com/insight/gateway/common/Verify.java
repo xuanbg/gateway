@@ -144,7 +144,7 @@ public class Verify {
         }
 
         // 无需鉴权,返回成功
-        if (authCode == null || authCode.isEmpty()) {
+        if (authCode == null || authCode.isBlank()) {
             return ReplyHelper.success();
         }
 
@@ -263,7 +263,7 @@ public class Verify {
         // 自动刷新授权信息
         if (LocalDateTime.now().isAfter(expiry) || permits == null) {
             permits = core.getPermits(Json.toBase64(this));
-            if (permits == null) {
+            if (permits == null || permits.isEmpty()) {
                 return false;
             }
 

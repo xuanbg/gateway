@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author 宣炳刚
@@ -50,7 +51,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
         String source = getIp(headers);
-        if (source == null || source.isEmpty()) {
+        if (source == null || source.isBlank()) {
             source = request.getRemoteAddress().getAddress().getHostAddress();
         }
 
@@ -60,6 +61,12 @@ public class LogFilter implements GlobalFilter, Ordered {
         request.mutate().header("fingerprint", fingerprint).build();
         exchange.getAttributes().put("requestId", requestId);
 
+        // 处理请求头
+        List<String> list = List.of("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent", "fingerprint");
+        Map<String, String> headerMap = headers.toSingleValueMap().entrySet().stream()
+                .filter(e -> list.contains(e.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
         // 构造入参对象
         HttpMethod method = request.getMethod();
         RequestPath path = request.getPath();
@@ -67,7 +74,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());
-        log.setHeaders(headers.toSingleValueMap());
+        log.setHeaders(headerMap);
 
         // 读取请求参数
         MultiValueMap<String, String> params = request.getQueryParams();
@@ -153,15 +160,15 @@ public class LogFilter implements GlobalFilter, Ordered {
         }
 
         AtomicReference<String> ip = new AtomicReference<>(headers.getFirst("X-Real-IP"));
-        if (ip.get() == null || ip.get().isEmpty()) {
+        if (ip.get() == null || ip.get().isBlank()) {
             ip.set(headers.getFirst("X-Forwarded-For"));
         }
 
-        if (ip.get() == null || ip.get().isEmpty()) {
+        if (ip.get() == null || ip.get().isBlank()) {
             ip.set(headers.getFirst("Proxy-Client-IP"));
         }
 
-        if (ip.get() == null || ip.get().isEmpty()) {
+        if (ip.get() == null || ip.get().isBlank()) {
             ip.set(headers.getFirst("WL-Proxy-Client-IP"));
         }
 
