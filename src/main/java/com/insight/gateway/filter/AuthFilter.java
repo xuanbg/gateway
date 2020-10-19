@@ -179,15 +179,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
             Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
-
             return false;
         }
 
-        Date time = DateHelper.parseDateTime(val);
-        long bypass = System.currentTimeMillis() - Objects.requireNonNull(time).getTime();
-
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
-        if (bypass < 1000) {
+        LocalDateTime time = LocalDateTime.parse(val).plusSeconds(1);
+        if (LocalDateTime.now().isBefore(time)) {
             Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
         }
 
