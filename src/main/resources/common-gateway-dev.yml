@@ -1,0 +1,134 @@
+server:
+  compression:
+    enabled: true
+    mime-types: application/json
+  port: 6200
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: business-dps
+          uri: lb://business-dps
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/business/dps/**
+        - id: account-funds
+          uri: lb://account-funds
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/account/funds/**
+        - id: account-users
+          uri: lb://account-users
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/account/users/**,/account/client/**
+        - id: account-manage
+          uri: lb://account-manage
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/account/manage/**
+        - id: common-message
+          uri: lb://common-message
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/common/message/**
+        - id: common-basedata
+          uri: lb://common-basedata
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/common/config/**,/common/param/**,/common/report/**,/common/area/**,/common/dict/**,/common/log/**
+        - id: base-resource
+          uri: lb://base-resource
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/base/resource/**
+        - id: base-user
+          uri: lb://base-user
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/base/user/**
+        - id: base-tenant
+          uri: lb://base-tenant
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/base/tenant/**
+        - id: base-organize
+          uri: lb://base-organize
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/base/organize/**
+        - id: base-role
+          uri: lb://base-role
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/base/role/**
+        - id: base-auth
+          uri: lb://base-auth
+          filters:
+            - AddResponseHeader=Content-Type, application/json; charset=UTF-8
+            - StripPrefix=0
+          predicates:
+            - Path=/base/auth/**
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  redis:
+    host: 192.168.160.8
+    port: 6379
+    password: root
+    database: 1
+    jedis:
+      pool:
+        min-idle: 0
+        max-idle: 8
+        max-wait: -1
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 3
+    service-url:
+      defaultZone: http://192.168.160.8:8761/eureka/
+  instance:
+    lease-expiration-duration-in-seconds: 10
+    lease-renewal-interval-in-seconds: 3
+    prefer-ip-address: true
+ribbon:
+  ServerListRefreshInterval: 3000
+  ReadTimeout: 10000
+  ConnectTimeout: 5000
+logging:
+  level:
+    com.insight: debug
+#  pattern:
+#    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] %logger{35}: %msg%n'
