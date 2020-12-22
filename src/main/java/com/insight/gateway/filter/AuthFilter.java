@@ -242,7 +242,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
         //设置headers
         HttpHeaders httpHeaders = response.getHeaders();
         httpHeaders.setAccessControlAllowOrigin("*");
-        //noinspection deprecation
         httpHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
         httpHeaders.setDate(System.currentTimeMillis());
         httpHeaders.setVary(Arrays.asList("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
@@ -332,7 +331,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             String url = config.getUrl();
             if (url.contains("{")) {
                 // 此正则表达式仅支持UUID作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
-                String regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/[0-9a-f]{32}");
+                String regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/([0-9a-f]{32}|[0-9]{19})");
                 config.setRegular(regular);
             }
         }
