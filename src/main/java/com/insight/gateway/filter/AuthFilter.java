@@ -1,7 +1,10 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.Verify;
-import com.insight.utils.*;
+import com.insight.utils.Json;
+import com.insight.utils.Redis;
+import com.insight.utils.ReplyHelper;
+import com.insight.utils.Util;
 import com.insight.utils.pojo.InterfaceDto;
 import com.insight.utils.pojo.LoginInfo;
 import com.insight.utils.pojo.Reply;
@@ -176,16 +179,17 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private boolean isLimited(String key, Integer gap) {
         key = "Surplus:" + key;
+        String now = LocalDateTime.now().toString();
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
-            Redis.set(key, LocalDateTime.now().toString(), gap, TimeUnit.SECONDS);
+            Redis.set(key, now, gap, TimeUnit.SECONDS);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
         LocalDateTime time = LocalDateTime.parse(val).plusSeconds(1);
         if (LocalDateTime.now().isBefore(time)) {
-            Redis.set(key, LocalDateTime.now().toString(), gap, TimeUnit.SECONDS);
+            Redis.set(key, now, gap, TimeUnit.SECONDS);
         }
 
         reply = ReplyHelper.tooOften();
