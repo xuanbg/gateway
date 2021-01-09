@@ -178,14 +178,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         key = "Surplus:" + key;
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
-            Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
+            Redis.set(key, LocalDateTime.now().toString(), gap, TimeUnit.SECONDS);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
         LocalDateTime time = LocalDateTime.parse(val).plusSeconds(1);
         if (LocalDateTime.now().isBefore(time)) {
-            Redis.set(key, DateHelper.getDateTime(), gap, TimeUnit.SECONDS);
+            Redis.set(key, LocalDateTime.now().toString(), gap, TimeUnit.SECONDS);
         }
 
         reply = ReplyHelper.tooOften();
