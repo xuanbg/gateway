@@ -8,7 +8,7 @@ spring:
     name: common-gateway
   cloud:
     config:
-      uri: https://config.i-facture.com
+      uri: http://localhost:6101
       label: master
       profile: dev
 ---
@@ -18,7 +18,7 @@ spring:
     name: common-gateway
   cloud:
     config:
-      uri: https://config.i-facture.com
+      uri: http://localhost:6101
       label: master
       profile: test
 ---
