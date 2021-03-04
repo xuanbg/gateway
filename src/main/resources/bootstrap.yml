@@ -1,33 +1,37 @@
+server:
+  port: 6200
 spring:
+  application:
+    name: common-gateway
+  cloud:
+    consul:
+      discovery:
+        register: true
+        service-name: ${spring.application.name}
+        ip-address: ${spring.cloud.client.ip-address}
+        prefer-ip-address: true
+      config:
+        enabled: true
+        format: yaml
+        prefix: config
+        defaultContext: ${spring.application.name}
   profiles:
     active: dev
 ---
 spring:
   profiles: dev
-  application:
-    name: common-gateway
   cloud:
-    config:
-      uri: http://localhost:6101
-      label: master
-      profile: dev
+    consul:
+      host: 172.25.254.40
 ---
 spring:
   profiles: test
-  application:
-    name: common-gateway
   cloud:
-    config:
-      uri: http://localhost:6101
-      label: master
-      profile: test
+    consul:
+      host: localhost
 ---
 spring:
   profiles: pro
-  application:
-    name: common-gateway
   cloud:
-    config:
-      uri: http://localhost:6101
-      label: master
-      profile: pro
+    consul:
+      host: localhost
