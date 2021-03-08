@@ -66,7 +66,7 @@
     <repositories>
         <repository>
             <id>local_release</id>
-            <url>http://172.25.254.40:8081/repository/maven-public/</url>
+            <url>https://nexus.i-facture.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
