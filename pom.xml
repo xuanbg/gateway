@@ -54,7 +54,7 @@
         <dependency>
             <groupId>com.insight</groupId>
             <artifactId>utils</artifactId>
-            <version>1.4.0-RELEASE</version>
+            <version>1.4.2-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.insight.utils</groupId>

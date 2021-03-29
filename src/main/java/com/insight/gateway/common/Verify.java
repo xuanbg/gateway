@@ -129,8 +129,8 @@ public class Verify {
             if (!basis.verifyTokenHash(hash)) {
                 return ReplyHelper.invalidToken();
             }
-        }else {
-            if (!basis.verifySecretKey(secret)){
+        } else {
+            if (!basis.verifySecretKey(secret)) {
                 return ReplyHelper.invalidToken();
             }
         }
@@ -256,23 +256,23 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        List<String> permits = basis.getPermitFuncs();
         Long permitLife = basis.getPermitLife();
         LocalDateTime expiry = basis.getPermitTime().plusSeconds((permitLife == null ? 0L : permitLife) / 1000);
 
         // 自动刷新授权信息
-        if (LocalDateTime.now().isAfter(expiry) || permits == null) {
-            permits = core.getPermits(Json.toBase64(this));
-            if (permits == null || permits.isEmpty()) {
-                return false;
-            }
-
+        if (LocalDateTime.now().isAfter(expiry)) {
+            List<String> permits = core.getPermits(Json.toBase64(this));
             basis.setPermitFuncs(permits);
             basis.setPermitTime(LocalDateTime.now());
 
             String key = "Token:" + tokenId;
             long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
             Redis.set(key, basis.toString(), expire, TimeUnit.MILLISECONDS);
+        }
+
+        List<String> permits = basis.getPermitFuncs();
+        if (permits == null || permits.isEmpty()){
+            return false;
         }
 
         return permits.stream().anyMatch(authCode::equalsIgnoreCase);
