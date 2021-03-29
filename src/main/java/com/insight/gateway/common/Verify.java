@@ -263,10 +263,6 @@ public class Verify {
         }
 
         List<String> permits = basis.getPermitFuncs();
-        if (permits == null || permits.isEmpty()) {
-            return false;
-        }
-
-        return permits.stream().anyMatch(authCode::equalsIgnoreCase);
+        return permits != null && !permits.isEmpty() && permits.stream().anyMatch(authCode::equalsIgnoreCase);
     }
 }
