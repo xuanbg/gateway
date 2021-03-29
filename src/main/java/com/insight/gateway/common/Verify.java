@@ -1,11 +1,11 @@
 package com.insight.gateway.common;
 
-import com.insight.utils.Json;
-import com.insight.utils.Redis;
-import com.insight.utils.ReplyHelper;
-import com.insight.utils.Util;
+import com.insight.utils.*;
 import com.insight.utils.common.ApplicationContextHolder;
-import com.insight.utils.pojo.*;
+import com.insight.utils.pojo.AccessToken;
+import com.insight.utils.pojo.Reply;
+import com.insight.utils.pojo.TokenInfo;
+import com.insight.utils.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -266,12 +266,22 @@ public class Verify {
             basis.setPermitTime(LocalDateTime.now());
 
             String key = "Token:" + tokenId;
-            long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
-            Redis.set(key, basis.toString(), expire, TimeUnit.MILLISECONDS);
+            long expire = Redis.getExpire(key, TimeUnit.SECONDS);
+            if (expire < 0){
+                long diff = DateHelper.getRemainSeconds(basis.getFailureTime());
+                if (diff <= 0){
+                    Redis.deleteKey(key);
+                    return false;
+                }else {
+                    expire = diff;
+                }
+            }
+
+            Redis.set(key, basis.toString(), expire, TimeUnit.SECONDS);
         }
 
         List<String> permits = basis.getPermitFuncs();
-        if (permits == null || permits.isEmpty()){
+        if (permits == null || permits.isEmpty()) {
             return false;
         }
 

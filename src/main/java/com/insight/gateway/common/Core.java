@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,11 +43,11 @@ public class Core {
                 return Json.cloneList(reply.getData(), String.class);
             } else {
                 logger.warn(reply.getMessage());
-                return null;
+                return new ArrayList<>();
             }
         } catch (Exception ex) {
             logger.warn(ex.getMessage());
-            return null;
+            return new ArrayList<>();
         }
     }
 }
