@@ -256,20 +256,10 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        String key = "Token:" + tokenId;
-        long diff = DateHelper.getRemainSeconds(basis.getFailureTime());
-        if (diff <= 0){
-            Redis.deleteKey(key);
-            return false;
-        }
-
-        // 自动刷新授权信息
-        Long permitLife = basis.getPermitLife();
-        LocalDateTime expiry = basis.getPermitTime().plusSeconds((permitLife == null ? 0L : permitLife) / 1000);
-        if (LocalDateTime.now().isAfter(expiry)) {
+        if (basis.isPermitExpiry()) {
             basis.setPermitFuncs(core.getPermits(Json.toBase64(this)));
             basis.setPermitTime(LocalDateTime.now());
-            Redis.set(key, basis.toString());
+            Redis.set("Token:" + tokenId, basis.toString());
         }
 
         List<String> permits = basis.getPermitFuncs();
