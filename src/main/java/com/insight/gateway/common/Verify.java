@@ -1,6 +1,9 @@
 package com.insight.gateway.common;
 
-import com.insight.utils.*;
+import com.insight.utils.Json;
+import com.insight.utils.Redis;
+import com.insight.utils.ReplyHelper;
+import com.insight.utils.Util;
 import com.insight.utils.common.ApplicationContextHolder;
 import com.insight.utils.pojo.AccessToken;
 import com.insight.utils.pojo.Reply;
@@ -9,11 +12,9 @@ import com.insight.utils.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author 宣炳刚
@@ -83,25 +84,19 @@ public class Verify {
             return;
         }
 
-        // 如果Token失效,则不更新过期时间和失效时间
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isAfter(basis.getFailureTime())) {
-            return;
-        }
-
-        // 判断Token剩余的过期时间.如果过期时间大于一半,则不更新过期时间和失效时间
-        Duration duration = Duration.between(now, basis.getExpiryTime());
-        long life = basis.getLife();
-        if (duration.toMillis() > life / 2) {
+        // 如果Token失效或过期时间大于一半,则不更新过期时间和失效时间.
+        if (basis.isFailure() || !basis.isHalfLife()) {
             return;
         }
 
         int timeOut = TokenInfo.TIME_OUT;
-        basis.setExpiryTime(now.plusSeconds(timeOut + (life / 1000)));
-        basis.setFailureTime(now.plusSeconds(timeOut + (life / 1000)));
+        long life = basis.getLife();
+        LocalDateTime now = LocalDateTime.now();
+        basis.setExpiryTime(now.plusSeconds(timeOut + life / 1000));
+        basis.setFailureTime(now.plusSeconds(timeOut + life / 1000 * 12));
 
-        long expire = (timeOut * 1000) + (life * 12);
-        Redis.set("Token:" + tokenId, basis.toString(), expire, TimeUnit.MILLISECONDS);
+        long expire = timeOut + life / 1000 * 12;
+        Redis.set("Token:" + tokenId, basis.toString(), expire);
     }
 
     /**
