@@ -16,7 +16,7 @@ spring:
     consul:
       host: 172.25.254.40
     inetutils:
-      preferred-networks: 172\.25\.254\.[\d]+|172\.25\.20\.[\d]+|192\.168\.1\.[\d]+
+      preferred-networks: 172\.25\.[\d]+\.[\d]+|192\.168\.1\.[\d]+
 ---
 spring:
   profiles: test
