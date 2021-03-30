@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -182,14 +181,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String now = LocalDateTime.now().toString();
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
-            Redis.set(key, now, gap, TimeUnit.SECONDS);
+            Redis.set(key, now, gap);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
         LocalDateTime time = LocalDateTime.parse(val).plusSeconds(1);
         if (LocalDateTime.now().isBefore(time)) {
-            Redis.set(key, now, gap, TimeUnit.SECONDS);
+            Redis.set(key, now, gap);
         }
 
         reply = ReplyHelper.tooOften();
@@ -209,7 +208,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         key = "Limit:" + key;
         String val = Redis.get(key);
         if (val == null || val.isEmpty()) {
-            Redis.set(key, "1", cycle, TimeUnit.SECONDS);
+            Redis.set(key, "1", cycle);
 
             return false;
         }
@@ -222,8 +221,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         count++;
-        long expire = Redis.getExpire(key, TimeUnit.MILLISECONDS);
-        Redis.set(key, Integer.toString(count), expire, TimeUnit.MILLISECONDS);
+        Redis.set(key, Integer.toString(count));
 
         return false;
     }

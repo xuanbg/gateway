@@ -92,10 +92,10 @@ public class Verify {
         int timeOut = TokenInfo.TIME_OUT;
         long life = basis.getLife();
         LocalDateTime now = LocalDateTime.now();
-        basis.setExpiryTime(now.plusSeconds(timeOut + life / 1000));
-        basis.setFailureTime(now.plusSeconds(timeOut + life / 1000 * 12));
+        basis.setExpiryTime(now.plusSeconds(timeOut + life));
+        basis.setFailureTime(now.plusSeconds(timeOut + life * 12));
 
-        long expire = timeOut + life / 1000 * 12;
+        long expire = timeOut + life * 12;
         Redis.set("Token:" + tokenId, basis.toString(), expire);
     }
 
