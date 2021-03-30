@@ -1,10 +1,7 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.Verify;
-import com.insight.utils.Json;
-import com.insight.utils.Redis;
-import com.insight.utils.ReplyHelper;
-import com.insight.utils.Util;
+import com.insight.utils.*;
 import com.insight.utils.pojo.InterfaceDto;
 import com.insight.utils.pojo.LoginInfo;
 import com.insight.utils.pojo.Reply;
@@ -86,7 +83,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             String redisKey = "SubmitToken:" + Util.md5(loginInfo.getUserId() + ":" + key);
             String submitToken = headers.getFirst("SubmitToken");
             String id = Redis.get(redisKey);
-            if (id == null || id.isEmpty() || !id.equals(submitToken)) {
+            if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {
                 reply = ReplyHelper.fail("SubmitToken不存在");
                 return initResponse(exchange);
             } else {
@@ -117,9 +114,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否通过验证
      */
     private boolean verify(String token, String fingerprint, String authCode) {
-        if (token == null || token.isEmpty()) {
+        if (!Util.isNotEmpty(token)) {
             reply = ReplyHelper.invalidToken();
-
             return false;
         }
 
@@ -142,7 +138,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否被限流
      */
     private boolean isLimited(InterfaceDto config, String fingerprint, String key) {
-        if (!config.getLimit() || key == null || key.isEmpty()) {
+        if (!config.getLimit() || !Util.isNotEmpty(key)) {
             return false;
         }
 
@@ -178,9 +174,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private boolean isLimited(String key, Integer gap) {
         key = "Surplus:" + key;
-        String now = LocalDateTime.now().toString();
+        String now = DateTime.formatCurrentTime();
         String val = Redis.get(key);
-        if (val == null || val.isEmpty()) {
+        if (!Util.isNotEmpty(val)) {
             Redis.set(key, now, gap);
             return false;
         }
@@ -207,7 +203,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
         key = "Limit:" + key;
         String val = Redis.get(key);
-        if (val == null || val.isEmpty()) {
+        if (!Util.isNotEmpty(val)) {
             Redis.set(key, "1", cycle);
 
             return false;
@@ -221,7 +217,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         count++;
-        Redis.set(key, Integer.toString(count));
+        Redis.set(key, String.valueOf(count));
 
         return false;
     }
