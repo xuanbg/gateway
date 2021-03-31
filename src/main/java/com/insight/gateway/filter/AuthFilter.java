@@ -142,27 +142,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        Integer gap = config.getLimitGap();
-        if (gap == null || gap.equals(0)) {
-            return false;
-        }
-
         String limitKey = Util.md5(fingerprint + "|" + key);
-        if (isLimited(limitKey, gap)) {
+        if (isLimited(limitKey, config.getLimitGap())) {
             return true;
         }
 
-        Integer cycle = config.getLimitCycle();
-        if (cycle == null || cycle.equals(0)) {
-            return false;
-        }
-
-        Integer max = config.getLimitMax();
-        if (max == null || max.equals(0)) {
-            return false;
-        }
-
-        return isLimited(limitKey, cycle, max, config.getMessage());
+        return isLimited(limitKey, config.getLimitCycle(), config.getLimitMax(), config.getMessage());
     }
 
     /**
@@ -173,18 +158,22 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否限制访问
      */
     private boolean isLimited(String key, Integer gap) {
+        if (gap == null || gap.equals(0)) {
+            return false;
+        }
+
         key = "Surplus:" + key;
         String now = DateTime.formatCurrentTime();
         String val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
-            Redis.set(key, now, gap);
+            Redis.set(key, now, Long.valueOf(gap));
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
         LocalDateTime time = LocalDateTime.parse(val).plusSeconds(1);
         if (LocalDateTime.now().isBefore(time)) {
-            Redis.set(key, now, gap);
+            Redis.set(key, now, Long.valueOf(gap));
         }
 
         reply = ReplyHelper.tooOften();
@@ -201,10 +190,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否限制访问
      */
     private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
+        if (cycle == null || cycle.equals(0) || max == null || max.equals(0)) {
+            return false;
+        }
+
         key = "Limit:" + key;
         String val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
-            Redis.set(key, "1", cycle);
+            Redis.set(key, "1", Long.valueOf(cycle));
 
             return false;
         }
