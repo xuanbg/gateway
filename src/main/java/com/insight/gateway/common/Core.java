@@ -32,21 +32,21 @@ public class Core {
     /**
      * 获取用户权限集合
      *
-     * @param info 用户关键信息
+     * @param requestId 请求ID
+     * @param info      用户关键信息
      * @return 权限集合
      */
-    public List<String> getPermits(String info) {
+    public List<String> getPermits(String requestId, String info) {
         try {
             Reply reply = client.getPermits(info);
             if (reply.getSuccess()) {
-                logger.info(reply.getData().toString());
                 return Json.cloneList(reply.getData(), String.class);
             } else {
-                logger.warn(reply.getMessage());
+                logger.warn("requestId: {}. 错误信息: {}", requestId, reply.getMessage());
                 return new ArrayList<>();
             }
         } catch (Exception ex) {
-            logger.warn(ex.getMessage());
+            logger.warn("requestId: {}. 错误信息: {}", requestId, ex.getMessage());
             return new ArrayList<>();
         }
     }

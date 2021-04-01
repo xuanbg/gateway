@@ -72,8 +72,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return isLimited(config, fingerprint, key) ? initResponse(exchange) : chain.filter(exchange);
         }
 
+        String requestId =  headers.getFirst("requestId");
         String token = headers.getFirst("Authorization");
-        boolean isVerified = verify(token, fingerprint, config.getAuthCode());
+        boolean isVerified = verify(requestId, token, fingerprint, config.getAuthCode());
         if (!isVerified || isLimited(config, fingerprint, key)) {
             return initResponse(exchange);
         }
@@ -108,18 +109,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 验证用户令牌并鉴权
      *
+     * @param requestId   请求ID
      * @param token       令牌
      * @param fingerprint 用户特征串
      * @param authCode    接口授权码
      * @return 是否通过验证
      */
-    private boolean verify(String token, String fingerprint, String authCode) {
+    private boolean verify(String requestId, String token, String fingerprint, String authCode) {
         if (!Util.isNotEmpty(token)) {
             reply = ReplyHelper.invalidToken();
             return false;
         }
 
-        Verify verify = new Verify(token, fingerprint);
+        Verify verify = new Verify(requestId, token, fingerprint);
         reply = verify.compare(authCode);
         if (!reply.getSuccess()) {
             return false;

@@ -24,6 +24,7 @@ import java.util.Map;
 public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Core core = ApplicationContextHolder.getContext().getBean(Core.class);
+    private final String requestId;
 
     /**
      * 令牌哈希值
@@ -58,15 +59,16 @@ public class Verify {
     /**
      * 构造方法
      *
+     * @param requestId   请求ID
      * @param token       访问令牌
      * @param fingerprint 用户特征串
      */
-    public Verify(String token, String fingerprint) {
+    public Verify(String requestId, String token, String fingerprint) {
+        this.requestId = requestId;
         hash = Util.md5(token + fingerprint);
         AccessToken accessToken = Json.toAccessToken(token);
         if (accessToken == null) {
-            logger.error("提取验证信息失败。Token is:" + token);
-
+            logger.error("requestId: {}. 错误信息: {}", requestId, "提取验证信息失败。Token is:" + token);
             return;
         }
 
@@ -149,7 +151,7 @@ public class Verify {
         }
 
         String account = user.getAccount();
-        logger.warn("用户『" + account + "』试图使用未授权的功能:" + authCode);
+        logger.warn("requestId: {}. 错误信息: {}", requestId, "用户『" + account + "』试图使用未授权的功能:" + authCode);
 
         return ReplyHelper.noAuth();
     }
@@ -252,7 +254,7 @@ public class Verify {
      */
     private Boolean isPermit(String authCode) {
         if (basis.isPermitExpiry()) {
-            basis.setPermitFuncs(core.getPermits(Json.toBase64(this)));
+            basis.setPermitFuncs(core.getPermits(requestId, Json.toBase64(this)));
             basis.setPermitTime(LocalDateTime.now());
             Redis.set("Token:" + tokenId, basis.toString());
         }
