@@ -151,7 +151,7 @@ public class Verify {
         }
 
         String account = user.getAccount();
-        logger.warn("requestId: {}. 错误信息: {}", requestId, "用户『" + account + "』试图使用未授权的功能:" + authCode);
+        logger.warn("requestId: {}. 告警信息: {}", requestId, "用户『" + account + "』试图使用未授权的功能:" + authCode);
 
         return ReplyHelper.noAuth();
     }

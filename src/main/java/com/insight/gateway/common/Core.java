@@ -42,11 +42,11 @@ public class Core {
             if (reply.getSuccess()) {
                 return Json.cloneList(reply.getData(), String.class);
             } else {
-                logger.warn("requestId: {}. 错误信息: {}", requestId, reply.getMessage());
+                logger.error("requestId: {}. 错误信息: {}", requestId, reply.getMessage());
                 return new ArrayList<>();
             }
         } catch (Exception ex) {
-            logger.warn("requestId: {}. 错误信息: {}", requestId, ex.getMessage());
+            logger.error("requestId: {}. 错误信息: {}", requestId, ex.getMessage());
             return new ArrayList<>();
         }
     }
