@@ -173,8 +173,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
-        LocalDateTime time = LocalDateTime.parse(val).plusSeconds(1);
-        if (LocalDateTime.now().isBefore(time)) {
+        LocalDateTime time = DateTime.parseDateTime(val);
+        if (LocalDateTime.now().isBefore(time.plusSeconds(1))) {
             Redis.set(key, now, Long.valueOf(gap));
         }
 
