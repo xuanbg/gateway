@@ -66,8 +66,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String key = method + ":" + path;
         HttpHeaders headers = request.getHeaders();
         String fingerprint = headers.getFirst("fingerprint");
-        Boolean isLogResult = config.getLogResult();
-        exchange.getAttributes().put("logResult", isLogResult != null && isLogResult);
+        exchange.getAttributes().put("logResult", config.getLogResult());
         if (!config.getVerify()) {
             return isLimited(config, fingerprint, key) ? initResponse(exchange) : chain.filter(exchange);
         }
@@ -159,8 +158,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @param gap 访问最小时间间隔
      * @return 是否限制访问
      */
-    private boolean isLimited(String key, Integer gap) {
-        if (gap == null || gap.equals(0)) {
+    private boolean isLimited(String key, long gap) {
+        if (0 >= gap) {
             return false;
         }
 
@@ -168,14 +167,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String now = DateTime.formatCurrentTime();
         String val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
-            Redis.set(key, now, Long.valueOf(gap));
+            Redis.set(key, now, gap);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
         LocalDateTime time = DateTime.parseDateTime(val);
         if (LocalDateTime.now().isBefore(time.plusSeconds(1))) {
-            Redis.set(key, now, Long.valueOf(gap));
+            Redis.set(key, now, gap);
         }
 
         reply = ReplyHelper.tooOften();
@@ -191,15 +190,15 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @param msg   消息
      * @return 是否限制访问
      */
-    private Boolean isLimited(String key, Integer cycle, Integer max, String msg) {
-        if (cycle == null || cycle.equals(0) || max == null || max.equals(0)) {
+    private Boolean isLimited(String key, long cycle, int max, String msg) {
+        if (0 >= cycle || 0 >= max) {
             return false;
         }
 
         key = "Limit:" + key;
         String val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
-            Redis.set(key, "1", Long.valueOf(cycle));
+            Redis.set(key, "1", cycle);
 
             return false;
         }
@@ -224,12 +223,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     private Mono<Void> initResponse(ServerWebExchange exchange) {
-        exchange.getAttributes().put("logResult", true);
-        ServerHttpResponse response = exchange.getResponse();
-
         //设置body
         String json = Json.toJson(reply);
         byte[] data = json.getBytes();
+        ServerHttpResponse response = exchange.getResponse();
         DataBuffer body = response.bufferFactory().wrap(data);
 
         //设置headers

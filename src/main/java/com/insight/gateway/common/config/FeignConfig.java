@@ -26,12 +26,12 @@ public class FeignConfig {
     }
 
     public ObjectFactory<HttpMessageConverters> feignHttpMessageConverter() {
-        final HttpMessageConverters httpMessageConverters = new HttpMessageConverters(new GateWayMappingJackson2HttpMessageConverter());
+        final HttpMessageConverters httpMessageConverters = new HttpMessageConverters(new GateWayHttpMessageConverter());
         return () -> httpMessageConverters;
     }
 
-    public static class GateWayMappingJackson2HttpMessageConverter extends MappingJackson2HttpMessageConverter {
-        GateWayMappingJackson2HttpMessageConverter() {
+    public static class GateWayHttpMessageConverter extends MappingJackson2HttpMessageConverter {
+        GateWayHttpMessageConverter() {
             List<MediaType> mediaTypes = new ArrayList<>();
             mediaTypes.add(MediaType.APPLICATION_JSON);
             setSupportedMediaTypes(mediaTypes);
