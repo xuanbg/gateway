@@ -165,14 +165,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         key = "Surplus:" + key;
         String now = DateTime.formatCurrentTime();
-        String val = Redis.get(key);
-        if (!Util.isNotEmpty(val)) {
+        String value = Redis.get(key);
+        if (!Util.isNotEmpty(value)) {
             Redis.set(key, now, gap);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
-        LocalDateTime time = DateTime.parseDateTime(val);
+        LocalDateTime time = DateTime.parseDateTime(value);
         if (LocalDateTime.now().isBefore(time.plusSeconds(1))) {
             Redis.set(key, now, gap);
         }
