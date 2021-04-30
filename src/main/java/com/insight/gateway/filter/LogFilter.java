@@ -57,10 +57,10 @@ public class LogFilter implements GlobalFilter, Ordered {
         }
 
         String requestId = Util.uuid();
-        String fingerprint = Util.md5(source + headers.getFirst("user-agent"));
+        String fingerprint = Util.md5(source + headers.getFirst("User-Agent"));
+        exchange.getAttributes().put("requestId", requestId);
         request.mutate().header("requestId", requestId).build();
         request.mutate().header("fingerprint", fingerprint).build();
-        exchange.getAttributes().put("requestId", requestId);
 
         // 处理请求头
         String[] list = new String[]{"Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent", "fingerprint"};
@@ -85,7 +85,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         long length = headers.getContentLength();
         MediaType contentType = headers.getContentType();
         if (length <= 0 || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
-            logger.info("requestId: {}. 请求参数: {}", requestId, log.toString());
+            logger.info("requestId: {}. 请求参数: {}", requestId, log);
 
             return chain.filter(exchange);
         }
@@ -134,7 +134,7 @@ public class LogFilter implements GlobalFilter, Ordered {
                 }
 
                 String requestId = exchange.getAttribute("requestId");
-                logger.info("requestId: {}. 请求参数：{}", requestId, log.toString());
+                logger.info("requestId: {}. 请求参数：{}", requestId, log);
             }).then(chain.filter(mutatedExchange));
         });
     }
