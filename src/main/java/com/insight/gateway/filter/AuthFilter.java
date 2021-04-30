@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private LocalDateTime flagTime = LocalDateTime.now();
-    private List<InterfaceDto> regConfigs = new ArrayList<>();
-    private Map<String, InterfaceDto> hashConfigs = new HashMap<>();
+    private LocalDateTime flagTime;
+    private List<InterfaceDto> regConfigs;
+    private Map<String, InterfaceDto> hashConfigs;
 
     /**
      * 令牌持有人信息
@@ -71,7 +71,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return isLimited(config, fingerprint, key) ? initResponse(exchange) : chain.filter(exchange);
         }
 
-        String requestId =  headers.getFirst("requestId");
+        String requestId = headers.getFirst("requestId");
         String token = headers.getFirst("Authorization");
         boolean isVerified = verify(requestId, token, fingerprint, config.getAuthCode());
         if (!isVerified || isLimited(config, fingerprint, key)) {
@@ -247,45 +247,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置
      */
     private InterfaceDto getConfig(HttpMethod method, String url) {
-        // 刷新缓存
         LocalDateTime now = LocalDateTime.now();
-        if (now.isAfter(flagTime.plusSeconds(60))) {
+        if (flagTime == null || now.isAfter(flagTime.plusSeconds(60))) {
             flagTime = now;
             hashConfigs = getHashConfigs();
             regConfigs = getRegularConfigs();
         }
 
         // 先进行哈希匹配
-        String hash = Util.md5(method.name() + ":" + url);
-        if (hashConfigs.containsKey(hash)) {
-            return hashConfigs.get(hash);
-        }
+        String path = method.name() + ":" + url;
+        InterfaceDto config = hashConfigs.getOrDefault(Util.md5(path), null);
 
         // 哈希匹配失败后进行正则匹配
-        String path = method + ":" + url;
-        for (InterfaceDto config : regConfigs) {
-            String regular = config.getRegular();
-            if (path.matches(regular)) {
-                return config;
-            }
-        }
-
-        // 重载配置进行哈希匹配
-        hashConfigs = getHashConfigs();
-        if (hashConfigs.containsKey(hash)) {
-            return hashConfigs.get(hash);
-        }
-
-        // 重载配置进行正则匹配
-        regConfigs = getRegularConfigs();
-        for (InterfaceDto config : regConfigs) {
-            String regular = config.getRegular();
-            if (path.matches(regular)) {
-                return config;
-            }
-        }
-
-        return null;
+        return config == null ? regConfigs.stream().filter(i -> path.matches(i.getRegular())).findAny().orElse(null) : config;
     }
 
     /**
@@ -320,7 +294,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             String method = config.getMethod();
             String url = config.getUrl();
             if (url.contains("{")) {
-                // 此正则表达式仅支持UUID作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
+                // 此正则表达式仅支持32位UUID或整形/长整形数字作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
                 String regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/([0-9a-f]{32}|[0-9]{1,19})");
                 config.setRegular(regular);
             }
