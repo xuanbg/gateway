@@ -91,7 +91,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             }
         }
 
-        request.mutate().header("loginInfo", loginInfo.toString()).build();
+        request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
         return chain.filter(exchange);
     }
 
