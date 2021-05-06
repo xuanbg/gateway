@@ -45,6 +45,16 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private Reply reply;
 
     /**
+     * 用户特征串
+     */
+    private String fingerprint;
+
+    /**
+     * 请求ID
+     */
+    private String requestId;
+
+    /**
      * 身份验证及鉴权过滤器
      *
      * @param exchange ServerWebExchange
@@ -54,6 +64,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        HttpHeaders headers = request.getHeaders();
+        fingerprint = headers.getFirst("fingerprint");
+        requestId = headers.getFirst("requestId");
+
         HttpMethod method = request.getMethod();
         String path = request.getPath().value();
         String key = method + ":" + path;
@@ -64,12 +78,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return initResponse(exchange);
         }
 
+        // 设置打印返回值标志
         exchange.getAttributes().put("logResult", config.getLogResult());
-        HttpHeaders headers = request.getHeaders();
-        String fingerprint = headers.getFirst("fingerprint");
 
         // 接口限流
-        if (isLimited(config, fingerprint, key)){
+        if (isLimited(config, key)){
             return initResponse(exchange);
         }
 
@@ -92,9 +105,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 私有接口验证Token,授权接口鉴权
-        String requestId = headers.getFirst("requestId");
         String token = headers.getFirst("Authorization");
-        boolean isVerified = verify(requestId, token, fingerprint, config.getAuthCode());
+        boolean isVerified = verify(token, config.getAuthCode());
         if (!isVerified) {
             return initResponse(exchange);
         }
@@ -117,13 +129,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 验证用户令牌并鉴权
      *
-     * @param requestId   请求ID
      * @param token       令牌
-     * @param fingerprint 用户特征串
      * @param authCode    接口授权码
      * @return 是否通过验证
      */
-    private boolean verify(String requestId, String token, String fingerprint, String authCode) {
+    private boolean verify(String token, String authCode) {
         if (!Util.isNotEmpty(token)) {
             reply = ReplyHelper.invalidToken();
             return false;
@@ -143,11 +153,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * 是否被限流
      *
      * @param config      接口配置表
-     * @param fingerprint 用户特征串
      * @param key         键值
      * @return 是否被限流
      */
-    private boolean isLimited(InterfaceDto config, String fingerprint, String key) {
+    private boolean isLimited(InterfaceDto config, String key) {
         if (!config.getLimit() || !Util.isNotEmpty(key)) {
             return false;
         }
@@ -233,6 +242,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private Mono<Void> initResponse(ServerWebExchange exchange) {
         //设置body
+        reply.setOption(requestId);
         String json = Json.toJson(reply);
         byte[] data = json.getBytes();
         ServerHttpResponse response = exchange.getResponse();
