@@ -1,7 +1,11 @@
 package com.insight.gateway.filter;
 
+import com.insight.gateway.common.ReplyHelper;
 import com.insight.gateway.common.Verify;
-import com.insight.utils.*;
+import com.insight.utils.DateTime;
+import com.insight.utils.Json;
+import com.insight.utils.Redis;
+import com.insight.utils.Util;
 import com.insight.utils.pojo.InterfaceDto;
 import com.insight.utils.pojo.LoginInfo;
 import com.insight.utils.pojo.Reply;
@@ -20,7 +24,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -74,7 +81,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         InterfaceDto config = getConfig(method, path);
         if (config == null) {
-            reply = ReplyHelper.fail("不存在的URL: " + key);
+            reply = ReplyHelper.fail(requestId, "不存在的URL: " + key);
             return initResponse(exchange);
         }
 
@@ -92,7 +99,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             String submitToken = headers.getFirst("SubmitToken");
             String id = Redis.get(redisKey);
             if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {
-                reply = ReplyHelper.fail("SubmitToken不存在");
+                reply = ReplyHelper.fail(requestId, "SubmitToken不存在");
                 return initResponse(exchange);
             } else {
                 Redis.deleteKey(redisKey);
@@ -135,7 +142,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private boolean verify(String token, String authCode) {
         if (!Util.isNotEmpty(token)) {
-            reply = ReplyHelper.invalidToken();
+            reply = ReplyHelper.invalidToken(requestId);
             return false;
         }
 
@@ -195,7 +202,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             Redis.set(key, now, gap);
         }
 
-        reply = ReplyHelper.tooOften();
+        reply = ReplyHelper.tooOften(requestId);
         return true;
     }
 
@@ -224,7 +231,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         // 读取访问次数,如次数超过限制,返回true,否则访问次数增加1次
         int count = Integer.parseInt(val);
         if (count > max) {
-            reply = ReplyHelper.tooOften(msg);
+            reply = ReplyHelper.tooOften(requestId, msg);
             return true;
         }
 

@@ -2,7 +2,6 @@ package com.insight.gateway.common;
 
 import com.insight.utils.Json;
 import com.insight.utils.Redis;
-import com.insight.utils.ReplyHelper;
 import com.insight.utils.Util;
 import com.insight.utils.common.ApplicationContextHolder;
 import com.insight.utils.pojo.AccessToken;
@@ -109,35 +108,35 @@ public class Verify {
      */
     public Reply compare(String authCode) {
         if (basis == null) {
-            return ReplyHelper.invalidToken();
+            return ReplyHelper.invalidToken(requestId);
         }
 
         // 验证用户
         if (isInvalid()) {
-            return ReplyHelper.forbid();
+            return ReplyHelper.forbid(requestId);
         }
 
         if (isLoginElsewhere()) {
-            return ReplyHelper.fail("您的账号已在其他设备登录");
+            return ReplyHelper.fail(requestId, "您的账号已在其他设备登录");
         }
 
         // 验证令牌
         if (basis.getVerifySource()) {
             if (!basis.verifyTokenHash(hash)) {
-                return ReplyHelper.invalidToken();
+                return ReplyHelper.invalidToken(requestId);
             }
         } else {
             if (!basis.verifySecretKey(secret)) {
-                return ReplyHelper.invalidToken();
+                return ReplyHelper.invalidToken(requestId);
             }
         }
 
         if (basis.isExpiry()) {
-            return ReplyHelper.expiredToken();
+            return ReplyHelper.expiredToken(requestId);
         }
 
         if (basis.isFailure()) {
-            return ReplyHelper.invalidToken();
+            return ReplyHelper.invalidToken(requestId);
         }
 
         // 无需鉴权,返回成功
@@ -153,7 +152,7 @@ public class Verify {
         String account = user.getAccount();
         logger.warn("requestId: {}. 告警信息: {}", requestId, "用户『" + account + "』试图使用未授权的功能:" + authCode);
 
-        return ReplyHelper.noAuth();
+        return ReplyHelper.noAuth(requestId);
     }
 
     /**
