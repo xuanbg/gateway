@@ -56,16 +56,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         HttpMethod method = request.getMethod();
         String path = request.getPath().value();
+        String key = method + ":" + path;
+
         InterfaceDto config = getConfig(method, path);
         if (config == null) {
-            reply = ReplyHelper.fail("不存在的URL: " + method + ":" + path);
+            reply = ReplyHelper.fail("不存在的URL: " + key);
             return initResponse(exchange);
         }
 
-        // 接口限流
-        String key = method + ":" + path;
+        exchange.getAttributes().put("logResult", config.getLogResult());
         HttpHeaders headers = request.getHeaders();
         String fingerprint = headers.getFirst("fingerprint");
+
+        // 接口限流
         if (isLimited(config, fingerprint, key)){
             return initResponse(exchange);
         }
@@ -84,7 +87,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 放行公共接口
-        exchange.getAttributes().put("logResult", config.getLogResult());
         if (!config.getVerify()) {
             return chain.filter(exchange);
         }
