@@ -70,6 +70,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return initResponse(exchange);
         }
 
+        // 验证提交数据临时Token
+        if (config.getNeedToken()) {
+            String redisKey = "SubmitToken:" + Util.md5(loginInfo.getUserId() + ":" + key);
+            String submitToken = headers.getFirst("SubmitToken");
+            String id = Redis.get(redisKey);
+            if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {
+                reply = ReplyHelper.fail("SubmitToken不存在");
+                return initResponse(exchange);
+            } else {
+                Redis.deleteKey(redisKey);
+            }
+        }
+
         // 放行公共接口
         exchange.getAttributes().put("logResult", config.getLogResult());
         if (!config.getVerify()) {
@@ -82,19 +95,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
         boolean isVerified = verify(requestId, token, fingerprint, config.getAuthCode());
         if (!isVerified) {
             return initResponse(exchange);
-        }
-
-        // 验证提交数据临时Token
-        if (config.getNeedToken()) {
-            String redisKey = "SubmitToken:" + Util.md5(loginInfo.getUserId() + ":" + key);
-            String submitToken = headers.getFirst("SubmitToken");
-            String id = Redis.get(redisKey);
-            if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {
-                reply = ReplyHelper.fail("SubmitToken不存在");
-                return initResponse(exchange);
-            } else {
-                Redis.deleteKey(redisKey);
-            }
         }
 
         // 请求头附加用户信息
