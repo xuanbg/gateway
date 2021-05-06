@@ -62,19 +62,25 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return initResponse(exchange);
         }
 
-        // 验证及鉴权
+        // 接口限流
         String key = method + ":" + path;
         HttpHeaders headers = request.getHeaders();
         String fingerprint = headers.getFirst("fingerprint");
-        exchange.getAttributes().put("logResult", config.getLogResult());
-        if (!config.getVerify()) {
-            return isLimited(config, fingerprint, key) ? initResponse(exchange) : chain.filter(exchange);
+        if (isLimited(config, fingerprint, key)){
+            return initResponse(exchange);
         }
 
+        // 放行公共接口
+        exchange.getAttributes().put("logResult", config.getLogResult());
+        if (!config.getVerify()) {
+            return chain.filter(exchange);
+        }
+
+        // 私有接口验证Token,授权接口鉴权
         String requestId = headers.getFirst("requestId");
         String token = headers.getFirst("Authorization");
         boolean isVerified = verify(requestId, token, fingerprint, config.getAuthCode());
-        if (!isVerified || isLimited(config, fingerprint, key)) {
+        if (!isVerified) {
             return initResponse(exchange);
         }
 
@@ -91,6 +97,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             }
         }
 
+        // 请求头附加用户信息
         request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
         return chain.filter(exchange);
     }
