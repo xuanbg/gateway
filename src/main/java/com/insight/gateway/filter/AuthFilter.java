@@ -62,6 +62,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private String requestId;
 
     /**
+     * 限流键名
+     */
+    private String limitKey;
+
+    /**
      * 身份验证及鉴权过滤器
      *
      * @param exchange ServerWebExchange
@@ -89,7 +94,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put("logResult", config.getLogResult());
 
         // 接口限流
-        if (isLimited(config, key)){
+        if (isLimited(config, key)) {
             return initResponse(exchange);
         }
 
@@ -136,8 +141,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 验证用户令牌并鉴权
      *
-     * @param token       令牌
-     * @param authCode    接口授权码
+     * @param token    令牌
+     * @param authCode 接口授权码
      * @return 是否通过验证
      */
     private boolean verify(String token, String authCode) {
@@ -149,6 +154,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         Verify verify = new Verify(requestId, token, fingerprint);
         reply = verify.compare(authCode);
         if (!reply.getSuccess()) {
+            Redis.deleteKey("Surplus:" + limitKey);
             return false;
         }
 
@@ -159,8 +165,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 是否被限流
      *
-     * @param config      接口配置表
-     * @param key         键值
+     * @param config 接口配置表
+     * @param key    键值
      * @return 是否被限流
      */
     private boolean isLimited(InterfaceDto config, String key) {
@@ -168,27 +174,26 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        String limitKey = Util.md5(fingerprint + "|" + key);
-        if (isLimited(limitKey, config.getLimitGap())) {
+        limitKey = Util.md5(fingerprint + "|" + key);
+        if (isLimited(config.getLimitGap())) {
             return true;
         }
 
-        return isLimited(limitKey, config.getLimitCycle(), config.getLimitMax(), config.getMessage());
+        return isLimited(config.getLimitCycle(), config.getLimitMax(), config.getMessage());
     }
 
     /**
      * 是否被限流(访问间隔小于最小时间间隔)
      *
-     * @param key 键值
      * @param gap 访问最小时间间隔
      * @return 是否限制访问
      */
-    private boolean isLimited(String key, long gap) {
+    private boolean isLimited(long gap) {
         if (0 >= gap) {
             return false;
         }
 
-        key = "Surplus:" + key;
+        String key = "Surplus:" + limitKey;
         String now = DateTime.formatCurrentTime();
         String value = Redis.get(key);
         if (!Util.isNotEmpty(value)) {
@@ -209,18 +214,17 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 是否被限流(限流计时周期内超过最大访问次数)
      *
-     * @param key   键值
      * @param cycle 限流计时周期(秒)
      * @param max   限制次数/限流周期
      * @param msg   消息
      * @return 是否限制访问
      */
-    private Boolean isLimited(String key, long cycle, int max, String msg) {
+    private Boolean isLimited(long cycle, int max, String msg) {
         if (0 >= cycle || 0 >= max) {
             return false;
         }
 
-        key = "Limit:" + key;
+        String key = "Limit:" + limitKey;
         String val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
             Redis.set(key, "1", cycle);
