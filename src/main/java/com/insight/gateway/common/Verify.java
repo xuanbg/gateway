@@ -48,12 +48,12 @@ public class Verify {
     /**
      * 令牌ID
      */
-    private String tokenId;
+    private Long tokenId;
 
     /**
      * 用户ID
      */
-    private String userId;
+    private Long userId;
 
     /**
      * 构造方法
@@ -160,7 +160,7 @@ public class Verify {
      *
      * @return 是否同一用户
      */
-    public boolean userIsEquals(String userId) {
+    public boolean userIsEquals(Long userId) {
         return this.userId.equals(userId);
     }
 
@@ -169,7 +169,7 @@ public class Verify {
      *
      * @return 应用ID
      */
-    public String getAppId() {
+    public Long getAppId() {
         return basis.getAppId();
     }
 
@@ -178,7 +178,7 @@ public class Verify {
      *
      * @return 租户ID
      */
-    public String getTenantId() {
+    public Long getTenantId() {
         return basis.getTenantId();
     }
 
@@ -187,7 +187,7 @@ public class Verify {
      *
      * @return 用户ID
      */
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
@@ -218,16 +218,16 @@ public class Verify {
      * @return 是否已在其他设备登录
      */
     private boolean isLoginElsewhere() {
-        String appId = basis.getAppId();
+        Long appId = basis.getAppId();
         String type = Redis.get("App:" + appId, "SignInType");
         if (!Boolean.parseBoolean(type)) {
             return false;
         }
 
         String key = "UserToken:" + userId;
-        String value = Redis.get(key, appId);
+        String value = Redis.get(key, appId.toString());
 
-        return !tokenId.equals(value);
+        return !tokenId.toString().equals(value);
     }
 
     /**
