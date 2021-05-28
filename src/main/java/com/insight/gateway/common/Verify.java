@@ -48,7 +48,7 @@ public class Verify {
     /**
      * 令牌ID
      */
-    private Long tokenId;
+    private String tokenId;
 
     /**
      * 用户ID
@@ -227,7 +227,7 @@ public class Verify {
         String key = "UserToken:" + userId;
         String value = Redis.get(key, appId.toString());
 
-        return !tokenId.toString().equals(value);
+        return !tokenId.equals(value);
     }
 
     /**
