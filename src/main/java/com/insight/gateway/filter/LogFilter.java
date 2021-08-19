@@ -56,8 +56,9 @@ public class LogFilter implements GlobalFilter, Ordered {
             source = request.getRemoteAddress().getAddress().getHostAddress();
         }
 
+        String token = headers.getFirst("Authorization");
         String requestId = Util.uuid();
-        String fingerprint = Util.md5(source + headers.getFirst("User-Agent"));
+        String fingerprint = Util.md5(Util.isEmpty(token) ? source + headers.getFirst("User-Agent") : token);
         exchange.getAttributes().put("requestId", requestId);
         request.mutate().header("requestId", requestId).build();
         request.mutate().header("fingerprint", fingerprint).build();
