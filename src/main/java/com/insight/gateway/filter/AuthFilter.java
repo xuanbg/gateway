@@ -85,7 +85,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String key = method + ":" + path;
 
         InterfaceDto config = getConfig(method, path);
-        if (config == null) {
+        if (!method.equals(HttpMethod.OPTIONS) && config == null) {
             reply = ReplyHelper.fail(requestId, "不存在的URL: " + key);
             return initResponse(exchange);
         }
