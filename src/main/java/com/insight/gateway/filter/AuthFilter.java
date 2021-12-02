@@ -81,11 +81,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         requestId = headers.getFirst("requestId");
 
         HttpMethod method = request.getMethod();
+        if (method.equals(HttpMethod.OPTIONS)){
+            return chain.filter(exchange);
+        }
+
         String path = request.getPath().value();
         String key = method + ":" + path;
-
         InterfaceDto config = getConfig(method, path);
-        if (!method.equals(HttpMethod.OPTIONS) && config == null) {
+        if (config == null) {
             reply = ReplyHelper.fail(requestId, "不存在的URL: " + key);
             return initResponse(exchange);
         }
