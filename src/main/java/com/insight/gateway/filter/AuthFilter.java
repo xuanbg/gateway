@@ -40,6 +40,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private LocalDateTime flagTime;
     private List<InterfaceDto> regConfigs;
     private Map<String, InterfaceDto> hashConfigs;
+    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent");
+    private final List<HttpMethod> allowMethods = Arrays.asList(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.OPTIONS);
 
     /**
      * 令牌持有人信息
@@ -82,6 +84,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         HttpMethod method = request.getMethod();
         if (method.equals(HttpMethod.OPTIONS)){
+            ServerHttpResponse response = exchange.getResponse();
+            HttpHeaders httpHeaders = response.getHeaders();
+            httpHeaders.setAccessControlAllowOrigin("*");
+            httpHeaders.setAccessControlAllowCredentials(true);
+            httpHeaders.setAccessControlAllowMethods(allowMethods);
+            httpHeaders.setAccessControlAllowHeaders(allowHeaders);
+
             return chain.filter(exchange);
         }
 
