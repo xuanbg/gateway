@@ -77,20 +77,20 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpResponse response = exchange.getResponse();
+        HttpHeaders httpHeaders = response.getHeaders();
+        httpHeaders.setAccessControlAllowOrigin("*");
+        httpHeaders.setAccessControlAllowCredentials(true);
+        httpHeaders.setAccessControlAllowMethods(allowMethods);
+        httpHeaders.setAccessControlAllowHeaders(allowHeaders);
+
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
         fingerprint = headers.getFirst("fingerprint");
         requestId = headers.getFirst("requestId");
 
         HttpMethod method = request.getMethod();
-        if (method.equals(HttpMethod.OPTIONS)){
-            ServerHttpResponse response = exchange.getResponse();
-            HttpHeaders httpHeaders = response.getHeaders();
-            httpHeaders.setAccessControlAllowOrigin("*");
-            httpHeaders.setAccessControlAllowCredentials(true);
-            httpHeaders.setAccessControlAllowMethods(allowMethods);
-            httpHeaders.setAccessControlAllowHeaders(allowHeaders);
-
+        if (HttpMethod.OPTIONS.equals(method)){
             return chain.filter(exchange);
         }
 
@@ -273,7 +273,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         //设置headers
         HttpHeaders httpHeaders = response.getHeaders();
-        httpHeaders.setAccessControlAllowOrigin("*");
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         httpHeaders.setDate(System.currentTimeMillis());
         httpHeaders.setVary(Arrays.asList("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
