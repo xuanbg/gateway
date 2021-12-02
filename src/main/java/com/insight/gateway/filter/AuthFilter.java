@@ -82,7 +82,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         HttpMethod method = request.getMethod();
         if (method.equals(HttpMethod.OPTIONS)){
-            return initResponse(exchange);
+            return chain.filter(exchange);
         }
 
         String path = request.getPath().value();
