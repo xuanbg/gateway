@@ -112,17 +112,6 @@ management:
     web:
       exposure:
         include: '*'
-eureka:
-  client:
-    fetch-registry: true
-    register-with-eureka: true
-    registry-fetch-interval-seconds: 3
-    service-url:
-      defaultZone: http://192.168.160.8:8761/eureka/
-  instance:
-    lease-expiration-duration-in-seconds: 10
-    lease-renewal-interval-in-seconds: 3
-    prefer-ip-address: true
 ribbon:
   ServerListRefreshInterval: 3000
   ReadTimeout: 10000
@@ -130,5 +119,3 @@ ribbon:
 logging:
   level:
     com.insight: debug
-#  pattern:
-#    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] %logger{35}: %msg%n'
