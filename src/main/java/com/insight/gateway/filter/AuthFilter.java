@@ -40,7 +40,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private LocalDateTime flagTime;
     private List<InterfaceDto> regConfigs;
     private Map<String, InterfaceDto> hashConfigs;
-    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent");
+    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
     private final List<HttpMethod> allowMethods = Arrays.asList(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.OPTIONS);
 
     /**

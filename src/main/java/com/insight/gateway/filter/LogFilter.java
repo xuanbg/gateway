@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 @Component
 public class LogFilter implements GlobalFilter, Ordered {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
 
     /**
      * 请求信息日志过滤器
@@ -64,9 +65,8 @@ public class LogFilter implements GlobalFilter, Ordered {
         request.mutate().header("fingerprint", fingerprint).build();
 
         // 处理请求头
-        String[] list = new String[]{"Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "User-Agent", "fingerprint"};
         Map<String, String> headerMap = headers.toSingleValueMap().entrySet().stream()
-                .filter(e -> Arrays.stream(list).anyMatch(i -> i.equalsIgnoreCase(e.getKey())))
+                .filter(e -> allowHeaders.stream().anyMatch(i -> i.equalsIgnoreCase(e.getKey())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // 构造入参对象
