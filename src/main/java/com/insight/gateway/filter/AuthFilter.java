@@ -79,9 +79,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
+        String allowOrigin = request.getURI().getHost() + "," + headers.getFirst("Referer") + "," + headers.getOrigin();
         ServerHttpResponse response = exchange.getResponse();
         HttpHeaders responseHeaders = response.getHeaders();
-        responseHeaders.setAccessControlAllowOrigin(request.getURI().getHost() + "," + headers.get("Referer"));
+        responseHeaders.setAccessControlAllowOrigin(allowOrigin);
         responseHeaders.setAccessControlAllowCredentials(true);
         responseHeaders.setAccessControlAllowMethods(allowMethods);
         responseHeaders.setAccessControlAllowHeaders(allowHeaders);
