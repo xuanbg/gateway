@@ -78,14 +78,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-        ServerHttpResponse response = exchange.getResponse();
-        HttpHeaders httpHeaders = response.getHeaders();
-        httpHeaders.setAccessControlAllowOrigin(request.getURI().getHost() + "," + httpHeaders.get("Referer"));
-        httpHeaders.setAccessControlAllowCredentials(true);
-        httpHeaders.setAccessControlAllowMethods(allowMethods);
-        httpHeaders.setAccessControlAllowHeaders(allowHeaders);
-
         HttpHeaders headers = request.getHeaders();
+        ServerHttpResponse response = exchange.getResponse();
+        HttpHeaders responseHeaders = response.getHeaders();
+        responseHeaders.setAccessControlAllowOrigin(request.getURI().getHost() + "," + headers.get("Referer"));
+        responseHeaders.setAccessControlAllowCredentials(true);
+        responseHeaders.setAccessControlAllowMethods(allowMethods);
+        responseHeaders.setAccessControlAllowHeaders(allowHeaders);
+
         fingerprint = headers.getFirst("fingerprint");
         requestId = headers.getFirst("requestId");
         HttpMethod method = request.getMethod();
