@@ -76,7 +76,7 @@ public class LogFilter implements GlobalFilter, Ordered {
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());
-        log.setHeaders(headerMap);
+        log.setHeaders(headers.toSingleValueMap());
 
         // 读取请求参数
         MultiValueMap<String, String> params = request.getQueryParams();
