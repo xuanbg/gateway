@@ -37,12 +37,11 @@ import java.util.stream.Collectors;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
+    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
+    private final List<HttpMethod> allowMethods = Arrays.asList(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.OPTIONS);
     private LocalDateTime flagTime;
     private List<InterfaceDto> regConfigs;
     private Map<String, InterfaceDto> hashConfigs;
-    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
-    private final List<HttpMethod> allowMethods = Arrays.asList(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.OPTIONS);
-
     /**
      * 令牌持有人信息
      */
@@ -79,10 +78,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
-        String allowOrigin = request.getURI().getHost() + "," + headers.getFirst("Referer") + "," + headers.getOrigin();
+
         ServerHttpResponse response = exchange.getResponse();
         HttpHeaders responseHeaders = response.getHeaders();
-        responseHeaders.setAccessControlAllowOrigin(allowOrigin);
+        responseHeaders.setAccessControlAllowOrigin(getAllowOrigin(request));
         responseHeaders.setAccessControlAllowCredentials(true);
         responseHeaders.setAccessControlAllowMethods(allowMethods);
         responseHeaders.setAccessControlAllowHeaders(allowHeaders);
@@ -90,7 +89,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         fingerprint = headers.getFirst("fingerprint");
         requestId = headers.getFirst("requestId");
         HttpMethod method = request.getMethod();
-        if (HttpMethod.OPTIONS.equals(method)){
+        if (HttpMethod.OPTIONS.equals(method)) {
             return chain.filter(exchange);
         }
 
@@ -342,5 +341,26 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取请求中的允许访问源
+     *
+     * @param request ServerHttpRequest
+     * @return AllowOrigin
+     */
+    private String getAllowOrigin(ServerHttpRequest request) {
+        HttpHeaders headers = request.getHeaders();
+        String origin = headers.getOrigin();
+        if (Util.isNotEmpty(origin) && !"null".equalsIgnoreCase(origin)) {
+            return origin;
+        }
+
+        String referer = headers.getFirst("Referer");
+        if (Util.isNotEmpty(referer)) {
+            return referer;
+        }
+
+        return request.getURI().getHost();
     }
 }
