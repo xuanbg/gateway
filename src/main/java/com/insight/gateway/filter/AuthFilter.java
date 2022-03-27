@@ -81,7 +81,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         ServerHttpResponse response = exchange.getResponse();
         HttpHeaders responseHeaders = response.getHeaders();
-        responseHeaders.setAccessControlAllowOrigin(getAllowOrigin(request));
+        responseHeaders.setAccessControlAllowOrigin(headers.getOrigin());
         responseHeaders.setAccessControlAllowCredentials(true);
         responseHeaders.setAccessControlAllowMethods(allowMethods);
         responseHeaders.setAccessControlAllowHeaders(allowHeaders);
@@ -341,26 +341,5 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
-    }
-
-    /**
-     * 获取请求中的允许访问源
-     *
-     * @param request ServerHttpRequest
-     * @return AllowOrigin
-     */
-    private String getAllowOrigin(ServerHttpRequest request) {
-        HttpHeaders headers = request.getHeaders();
-        String origin = headers.getOrigin();
-        if (Util.isNotEmpty(origin) && !"null".equalsIgnoreCase(origin)) {
-            return origin;
-        }
-
-        String referer = headers.getFirst("Referer");
-        if (Util.isNotEmpty(referer)) {
-            return referer;
-        }
-
-        return request.getURI().getHost();
     }
 }
