@@ -28,7 +28,7 @@ spring:
   profiles: dte
   cloud:
     consul:
-      host: 192.168.30.22
+      host: 172.24.68.22
 ---
 spring:
   profiles: pro
