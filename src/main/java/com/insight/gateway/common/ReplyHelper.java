@@ -38,27 +38,22 @@ public final class ReplyHelper {
         //
         NO_AUTH_REPLY.setCode(403);
         NO_AUTH_REPLY.setMessage("未授权");
-        NO_AUTH_REPLY.setSuccess(false);
 
         //forbidden
         FORBID_REPLY.setCode(413);
         FORBID_REPLY.setMessage("账户被禁止使用");
-        FORBID_REPLY.setSuccess(false);
 
         //invalid token
         INVALID_TOKEN_REPLY.setCode(421);
         INVALID_TOKEN_REPLY.setMessage("无效凭证");
-        INVALID_TOKEN_REPLY.setSuccess(false);
 
         //expired token
         EXPIRED_TOKEN_REPLY.setCode(422);
         EXPIRED_TOKEN_REPLY.setMessage("凭证过期，需刷新");
-        EXPIRED_TOKEN_REPLY.setSuccess(false);
 
         //请求过于频繁
         TOO_OFTEN_REPLY.setCode(490);
         TOO_OFTEN_REPLY.setMessage("您请求过于频繁，请稍后重试！");
-        TOO_OFTEN_REPLY.setSuccess(false);
     }
 
     /**
@@ -69,7 +64,6 @@ public final class ReplyHelper {
     public static Reply success() {
         Reply reply = new Reply();
         reply.setCode(200);
-        reply.setSuccess(true);
         reply.setMessage("请求成功");
 
         return reply;
@@ -85,7 +79,6 @@ public final class ReplyHelper {
     public static Reply fail(String requestId, String msg) {
         Reply reply = new Reply();
         reply.setCode(400);
-        reply.setSuccess(false);
         reply.setMessage(msg);
         reply.setOption(requestId);
 
