@@ -1,8 +1,7 @@
 package com.insight.gateway.common.dto;
 
-import com.insight.utils.Json;
+import com.insight.utils.pojo.base.BaseXo;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -10,8 +9,7 @@ import java.util.Map;
  * @date 2017/11/4
  * @remark 日志记录类
  */
-public class LogDto implements Serializable {
-    private static final long serialVersionUID = -1L;
+public class LogDto extends BaseXo {
 
     /**
      * 来源IP
@@ -89,10 +87,5 @@ public class LogDto implements Serializable {
 
     public void setBody(Object body) {
         this.body = body;
-    }
-
-    @Override
-    public String toString() {
-        return Json.toJson(this);
     }
 }

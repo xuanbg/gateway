@@ -2,7 +2,7 @@ package com.insight.gateway.common;
 
 import com.insight.gateway.common.client.AuthClient;
 import com.insight.utils.Json;
-import com.insight.utils.pojo.Reply;
+import com.insight.utils.pojo.base.Reply;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

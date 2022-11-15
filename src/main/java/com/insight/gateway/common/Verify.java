@@ -4,10 +4,10 @@ import com.insight.utils.Json;
 import com.insight.utils.Redis;
 import com.insight.utils.Util;
 import com.insight.utils.common.ApplicationContextHolder;
-import com.insight.utils.pojo.AccessToken;
-import com.insight.utils.pojo.Reply;
-import com.insight.utils.pojo.TokenInfo;
-import com.insight.utils.pojo.User;
+import com.insight.utils.pojo.auth.AccessToken;
+import com.insight.utils.pojo.auth.TokenInfo;
+import com.insight.utils.pojo.base.Reply;
+import com.insight.utils.pojo.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
