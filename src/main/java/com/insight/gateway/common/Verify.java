@@ -3,7 +3,6 @@ package com.insight.gateway.common;
 import com.insight.utils.Json;
 import com.insight.utils.Redis;
 import com.insight.utils.Util;
-import com.insight.utils.common.ApplicationContextHolder;
 import com.insight.utils.pojo.auth.AccessToken;
 import com.insight.utils.pojo.auth.TokenInfo;
 import com.insight.utils.pojo.base.Reply;
@@ -22,7 +21,6 @@ import java.util.Map;
  */
 public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Core core = ApplicationContextHolder.getContext().getBean(Core.class);
     private final String requestId;
 
     /**
@@ -252,12 +250,6 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        if (basis.isPermitExpiry()) {
-            basis.setPermitFuncs(core.getPermits(requestId, Json.toBase64(this)));
-            basis.setPermitTime(LocalDateTime.now());
-            Redis.set("Token:" + tokenId, basis.toString());
-        }
-
         List<String> permits = basis.getPermitFuncs();
         return permits != null && !permits.isEmpty() && permits.stream().anyMatch(authCode::equalsIgnoreCase);
     }
