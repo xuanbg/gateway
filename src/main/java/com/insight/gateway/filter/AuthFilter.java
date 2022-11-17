@@ -169,7 +169,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        loginInfo = Json.clone(verify, LoginInfo.class);
+        loginInfo = verify.getLoinInfo();
         return true;
     }
 

@@ -4,6 +4,7 @@ import com.insight.utils.Json;
 import com.insight.utils.Redis;
 import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.AccessToken;
+import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenInfo;
 import com.insight.utils.pojo.base.Reply;
 import com.insight.utils.pojo.user.User;
@@ -154,48 +155,21 @@ public class Verify {
     }
 
     /**
+     * 获取令牌持有人的登录信息
+     *
+     * @return 用户登录信息
+     */
+    public LoginInfo getLoinInfo() {
+        return Json.clone(basis, LoginInfo.class);
+    }
+
+    /**
      * 获取令牌中的用户ID
      *
      * @return 是否同一用户
      */
-    public boolean userIsEquals(Long userId) {
+    private boolean userIsEquals(Long userId) {
         return this.userId.equals(userId);
-    }
-
-    /**
-     * 获取令牌持有人的应用ID
-     *
-     * @return 应用ID
-     */
-    public Long getAppId() {
-        return basis.getAppId();
-    }
-
-    /**
-     * 获取令牌持有人的租户ID
-     *
-     * @return 租户ID
-     */
-    public Long getTenantId() {
-        return basis.getTenantId();
-    }
-
-    /**
-     * 获取令牌持有人的用户ID
-     *
-     * @return 用户ID
-     */
-    public Long getUserId() {
-        return userId;
-    }
-
-    /**
-     * 获取令牌持有人的用户名
-     *
-     * @return 用户名
-     */
-    public String getUserName() {
-        return user.getName();
     }
 
     /**
