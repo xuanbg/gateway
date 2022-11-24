@@ -45,17 +45,12 @@
         <dependency>
             <groupId>com.insight</groupId>
             <artifactId>utils</artifactId>
-            <version>2.2.0-RELEASE</version>
+            <version>2.2.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.insight.utils</groupId>
             <artifactId>redis</artifactId>
             <version>2.2.0-RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.33</version>
         </dependency>
     </dependencies>
 
