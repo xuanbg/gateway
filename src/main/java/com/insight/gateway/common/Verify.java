@@ -111,11 +111,11 @@ public class Verify {
         }
 
         // 验证用户
-        if (isInvalid()) {
+        if (invalid()) {
             return ReplyHelper.forbid(requestId);
         }
 
-        if (isLoginElsewhere()) {
+        if (loginElsewhere()) {
             return ReplyHelper.fail(requestId, "您的账号已在其他设备登录");
         }
 
@@ -189,7 +189,7 @@ public class Verify {
      *
      * @return 是否已在其他设备登录
      */
-    private boolean isLoginElsewhere() {
+    private boolean loginElsewhere() {
         Long appId = basis.getAppId();
         String type = Redis.get("App:" + appId, "SignInType");
         if (!Boolean.parseBoolean(type)) {
@@ -207,7 +207,7 @@ public class Verify {
      *
      * @return 是否被禁用
      */
-    private boolean isInvalid() {
+    private boolean invalid() {
         String key = "User:" + userId;
         String value = Redis.get(key, "invalid");
         if (value == null) {
