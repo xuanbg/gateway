@@ -81,7 +81,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         ServerHttpResponse response = exchange.getResponse();
         HttpHeaders responseHeaders = response.getHeaders();
-        responseHeaders.setAccessControlAllowOrigin(headers.getOrigin());
+        responseHeaders.setAccessControlAllowOrigin("*");
         responseHeaders.setAccessControlAllowCredentials(true);
         responseHeaders.setAccessControlAllowMethods(allowMethods);
         responseHeaders.setAccessControlAllowHeaders(allowHeaders);
