@@ -74,7 +74,7 @@ public class Verify {
             return;
         }
 
-        userId = basis.getLoginInfo().getId();
+        userId = basis.getUserId();
         var map = Redis.getEntity("User:" + userId);
         user = Json.clone(map, User.class);
         if (!basis.getAutoRefresh()) {
@@ -157,7 +157,16 @@ public class Verify {
      * @return 用户登录信息
      */
     public LoginInfo getLoinInfo() {
-        return basis.getLoginInfo();
+        var data = Redis.getEntity("User:" + userId);
+        var loginInfo = Json.clone(data, LoginInfo.class);
+
+        loginInfo.setAppId(basis.getAppId());
+        loginInfo.setTenantId(basis.getTenantId());
+        loginInfo.setTenantName(basis.getTenantName());
+        loginInfo.setOrgId(basis.getOrgId());
+        loginInfo.setOrgName(basis.getOrgName());
+        loginInfo.setAreaCode(basis.getAreaCode());
+        return loginInfo;
     }
 
     /**
