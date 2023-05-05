@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.5</version>
+        <version>3.0.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.insight</groupId>
@@ -16,10 +16,15 @@
 
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2021.0.4</spring-cloud.version>
+        <spring-cloud.version>2022.0.1</spring-cloud.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
@@ -38,25 +43,20 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.insight</groupId>
             <artifactId>utils</artifactId>
-            <version>2.2.3-RELEASE</version>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
-            <groupId>com.insight.utils</groupId>
-            <artifactId>redis</artifactId>
-            <version>2.2.0-RELEASE</version>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.0</version>
         </dependency>
     </dependencies>
 
     <repositories>
         <repository>
-            <id>local_release</id>
+            <id>release</id>
             <url>https://nexus.i-facture.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>

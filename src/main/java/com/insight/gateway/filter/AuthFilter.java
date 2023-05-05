@@ -4,7 +4,7 @@ import com.insight.gateway.common.ReplyHelper;
 import com.insight.gateway.common.Verify;
 import com.insight.utils.DateTime;
 import com.insight.utils.Json;
-import com.insight.utils.Redis;
+import com.insight.utils.redis.Redis;
 import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.InterfaceDto;
 import com.insight.utils.pojo.auth.LoginInfo;
@@ -111,7 +111,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 验证提交数据临时Token
         if (config.getNeedToken()) {
-            String redisKey = "SubmitToken:" + Util.md5(loginInfo.getUserId() + ":" + key);
+            String redisKey = "SubmitToken:" + Util.md5(loginInfo.getId() + ":" + key);
             String submitToken = headers.getFirst("SubmitToken");
             String id = Redis.get(redisKey);
             if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {

@@ -1,19 +1,16 @@
 package com.insight.gateway.common;
 
 import com.insight.utils.Json;
-import com.insight.utils.Redis;
 import com.insight.utils.Util;
-import com.insight.utils.pojo.auth.AccessToken;
 import com.insight.utils.pojo.auth.LoginInfo;
-import com.insight.utils.pojo.auth.TokenInfo;
+import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.base.Reply;
 import com.insight.utils.pojo.user.User;
+import com.insight.utils.redis.Redis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author 宣炳刚
@@ -37,7 +34,7 @@ public class Verify {
     /**
      * 缓存中的令牌信息
      */
-    private TokenInfo basis;
+    private TokenData basis;
 
     /**
      * 缓存中的用户信息
@@ -64,7 +61,7 @@ public class Verify {
     public Verify(String requestId, String token, String fingerprint) {
         this.requestId = requestId;
         hash = Util.md5(token + fingerprint);
-        AccessToken accessToken = Json.toAccessToken(token);
+        var accessToken = Json.toToken(token);
         if (accessToken == null) {
             logger.error("requestId: {}. 错误信息: {}", requestId, "提取验证信息失败。Token is:" + token);
             return;
@@ -77,8 +74,8 @@ public class Verify {
             return;
         }
 
-        userId = basis.getUserId();
-        Map<Object, Object> map = Redis.getEntity("User:" + userId);
+        userId = basis.getLoginInfo().getId();
+        var map = Redis.getEntity("User:" + userId);
         user = Json.clone(map, User.class);
         if (!basis.getAutoRefresh()) {
             return;
@@ -89,13 +86,13 @@ public class Verify {
             return;
         }
 
-        int timeOut = TokenInfo.TIME_OUT;
+        var timeOut = TokenData.TIME_OUT;
         long life = basis.getLife();
-        LocalDateTime now = LocalDateTime.now();
+        var now = LocalDateTime.now();
         basis.setExpiryTime(now.plusSeconds(timeOut + life));
         basis.setFailureTime(now.plusSeconds(timeOut + life * 12));
 
-        long expire = timeOut + life * 12;
+        var expire = timeOut + life * 12;
         Redis.set("Token:" + tokenId, basis.toString(), expire);
     }
 
@@ -148,7 +145,7 @@ public class Verify {
             return ReplyHelper.success();
         }
 
-        String account = user.getAccount();
+        var account = user.getAccount();
         logger.warn("requestId: {}. 告警信息: {}", requestId, "用户『" + account + "』试图使用未授权的功能:" + authCode);
 
         return ReplyHelper.noAuth(requestId);
@@ -160,7 +157,7 @@ public class Verify {
      * @return 用户登录信息
      */
     public LoginInfo getLoinInfo() {
-        return Json.clone(basis, LoginInfo.class);
+        return basis.getLoginInfo();
     }
 
     /**
@@ -177,11 +174,11 @@ public class Verify {
      *
      * @return TokenInfo(可能为null)
      */
-    private TokenInfo getToken() {
-        String key = "Token:" + tokenId;
-        String json = Redis.get(key);
+    private TokenData getToken() {
+        var key = "Token:" + tokenId;
+        var json = Redis.get(key);
 
-        return Json.toBean(json, TokenInfo.class);
+        return Json.toBean(json, TokenData.class);
     }
 
     /**
@@ -191,13 +188,13 @@ public class Verify {
      */
     private boolean loginElsewhere() {
         Long appId = basis.getAppId();
-        String type = Redis.get("App:" + appId, "SignInType");
+        var type = Redis.get("App:" + appId, "SignInType");
         if (!Boolean.parseBoolean(type)) {
             return false;
         }
 
-        String key = "UserToken:" + userId;
-        String value = Redis.get(key, appId.toString());
+        var key = "UserToken:" + userId;
+        var value = Redis.get(key, appId.toString());
 
         return !tokenId.equals(value);
     }
@@ -208,8 +205,8 @@ public class Verify {
      * @return 是否被禁用
      */
     private boolean invalid() {
-        String key = "User:" + userId;
-        String value = Redis.get(key, "invalid");
+        var key = "User:" + userId;
+        var value = Redis.get(key, "invalid");
         if (value == null) {
             return false;
         }
@@ -224,7 +221,7 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        List<String> permits = basis.getPermitFuncs();
+        var permits = basis.getPermitFuncs();
         return permits != null && !permits.isEmpty() && permits.stream().anyMatch(authCode::equalsIgnoreCase);
     }
 }
