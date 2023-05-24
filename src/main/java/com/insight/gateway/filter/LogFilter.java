@@ -1,6 +1,7 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.dto.LogDto;
+import com.insight.utils.Json;
 import com.insight.utils.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -120,7 +122,15 @@ public class LogFilter implements GlobalFilter, Ordered {
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, HandlerStrategies.withDefaults().messageReaders()).bodyToMono(String.class).doOnNext(body -> {
                 String requestId = exchange.getAttribute("requestId");
-                log.setBody(body);
+                if (Pattern.matches("^\\[.*]$", body)) {
+                    List<Object> list = Json.toList(body, Object.class);
+                    log.setBody(list == null ? body : list);
+                } else if (Pattern.matches("^\\{.*}$", body)) {
+                    Map obj = Json.toMap(body);
+                    log.setBody(obj == null ? body : obj);
+                } else {
+                    log.setBody(body);
+                }
                 logger.info("requestId: {}. 请求参数：{}", requestId, log);
             }).then(chain.filter(mutatedExchange));
         });
