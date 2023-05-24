@@ -1,7 +1,6 @@
 package com.insight.gateway.filter;
 
 import com.insight.gateway.common.dto.LogDto;
-import com.insight.utils.Json;
 import com.insight.utils.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
@@ -28,7 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -82,16 +79,14 @@ public class LogFilter implements GlobalFilter, Ordered {
         MultiValueMap<String, String> params = request.getQueryParams();
         log.setParams(params.isEmpty() ? null : params.toSingleValueMap());
 
-        // 如请求方法为GET或Body为空或Body不是Json,则打印日志后结束
+        // 如Body不为空,则将body内容加入日志
         long length = headers.getContentLength();
-        MediaType contentType = headers.getContentType();
-        if (length <= 0 || !contentType.equalsTypeAndSubtype(MediaType.APPLICATION_JSON)) {
-            logger.info("requestId: {}. 请求参数: {}", requestId, log);
-
-            return chain.filter(exchange);
+        if (length > 0) {
+            return readBody(exchange, chain, log);
         }
 
-        return readBody(exchange, chain, log);
+        logger.info("requestId: {}. 请求参数: {}", requestId, log);
+        return chain.filter(exchange);
     }
 
     /**
@@ -124,17 +119,8 @@ public class LogFilter implements GlobalFilter, Ordered {
 
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, HandlerStrategies.withDefaults().messageReaders()).bodyToMono(String.class).doOnNext(body -> {
-                if (Pattern.matches("^\\[.*]$", body)) {
-                    List<Object> list = Json.toList(body, Object.class);
-                    log.setBody(list == null ? body : list);
-                } else if (Pattern.matches("^\\{.*}$", body)) {
-                    Map obj = Json.toMap(body);
-                    log.setBody(obj == null ? body : obj);
-                } else {
-                    log.setBody(body);
-                }
-
                 String requestId = exchange.getAttribute("requestId");
+                log.setBody(body);
                 logger.info("requestId: {}. 请求参数：{}", requestId, log);
             }).then(chain.filter(mutatedExchange));
         });
