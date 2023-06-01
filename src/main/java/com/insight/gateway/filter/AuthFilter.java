@@ -4,20 +4,16 @@ import com.insight.gateway.common.ReplyHelper;
 import com.insight.gateway.common.Verify;
 import com.insight.utils.DateTime;
 import com.insight.utils.Json;
-import com.insight.utils.redis.Redis;
 import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.InterfaceDto;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.base.Reply;
+import com.insight.utils.redis.Redis;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -37,8 +33,6 @@ import java.util.stream.Collectors;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
-    private final List<HttpMethod> allowMethods = Arrays.asList(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.OPTIONS);
     private LocalDateTime flagTime;
     private List<InterfaceDto> regConfigs;
     private Map<String, InterfaceDto> hashConfigs;
@@ -76,26 +70,18 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        HttpHeaders headers = request.getHeaders();
-
-        ServerHttpResponse response = exchange.getResponse();
-        HttpHeaders responseHeaders = response.getHeaders();
-        responseHeaders.setAccessControlAllowOrigin("*");
-        responseHeaders.setAccessControlAllowCredentials(true);
-        responseHeaders.setAccessControlAllowMethods(allowMethods);
-        responseHeaders.setAccessControlAllowHeaders(allowHeaders);
+        var request = exchange.getRequest();
+        var headers = request.getHeaders();
+        var response = exchange.getResponse();
+        var responseHeaders = response.getHeaders();
 
         fingerprint = headers.getFirst("fingerprint");
         requestId = headers.getFirst("requestId");
-        HttpMethod method = request.getMethod();
-        if (HttpMethod.OPTIONS.equals(method)) {
-            return chain.filter(exchange);
-        }
+        var method = request.getMethod();
 
-        String path = request.getPath().value();
-        String key = method + ":" + path;
-        InterfaceDto config = getConfig(method, path);
+        var path = request.getPath().value();
+        var key = method + ":" + path;
+        var config = getConfig(method, path);
         if (config == null) {
             reply = ReplyHelper.fail(requestId, "不存在的URL: " + key);
             return initResponse(exchange);
@@ -111,9 +97,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 验证提交数据临时Token
         if (config.getNeedToken()) {
-            String redisKey = "SubmitToken:" + Util.md5(loginInfo.getId() + ":" + key);
-            String submitToken = headers.getFirst("SubmitToken");
-            String id = Redis.get(redisKey);
+            var redisKey = "SubmitToken:" + Util.md5(loginInfo.getId() + ":" + key);
+            var submitToken = headers.getFirst("SubmitToken");
+            var id = Redis.get(redisKey);
             if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {
                 reply = ReplyHelper.fail(requestId, "SubmitToken不存在");
                 return initResponse(exchange);
@@ -128,8 +114,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 私有接口验证Token,授权接口鉴权
-        String token = headers.getFirst("Authorization");
-        boolean isVerified = verify(token, config.getAuthCode());
+        var token = headers.getFirst("Authorization");
+        var isVerified = verify(token, config.getAuthCode());
         if (!isVerified) {
             return initResponse(exchange);
         }
@@ -162,7 +148,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        Verify verify = new Verify(requestId, token, fingerprint);
+        var verify = new Verify(requestId, token, fingerprint);
         reply = verify.compare(authCode);
         if (!reply.getSuccess()) {
             Redis.deleteKey("Surplus:" + limitKey);
@@ -204,16 +190,16 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        String key = "Surplus:" + limitKey;
-        String now = DateTime.formatCurrentTime();
-        String value = Redis.get(key);
+        var key = "Surplus:" + limitKey;
+        var now = DateTime.formatCurrentTime();
+        var value = Redis.get(key);
         if (!Util.isNotEmpty(value)) {
             Redis.set(key, now, gap);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
-        LocalDateTime time = DateTime.parseDateTime(value);
+        var time = DateTime.parseDateTime(value);
         if (LocalDateTime.now().isBefore(time.plusSeconds(1))) {
             Redis.set(key, now, gap);
         }
@@ -235,8 +221,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        String key = "Limit:" + limitKey;
-        String val = Redis.get(key);
+        var key = "Limit:" + limitKey;
+        var val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
             Redis.set(key, "1", cycle);
 
@@ -244,7 +230,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 读取访问次数,如次数超过限制,返回true,否则访问次数增加1次
-        int count = Integer.parseInt(val);
+        var count = Integer.parseInt(val);
         if (count > max) {
             reply = ReplyHelper.tooOften(requestId, msg);
             return true;
@@ -265,13 +251,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private Mono<Void> initResponse(ServerWebExchange exchange) {
         //设置body
         reply.setOption(requestId);
-        String json = Json.toJson(reply);
-        byte[] data = json.getBytes();
-        ServerHttpResponse response = exchange.getResponse();
-        DataBuffer body = response.bufferFactory().wrap(data);
+        var json = Json.toJson(reply);
+        var data = json.getBytes();
+        var response = exchange.getResponse();
+        var body = response.bufferFactory().wrap(data);
 
         //设置headers
-        HttpHeaders httpHeaders = response.getHeaders();
+        var httpHeaders = response.getHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         httpHeaders.setDate(System.currentTimeMillis());
         httpHeaders.setVary(Arrays.asList("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
@@ -287,7 +273,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置
      */
     private InterfaceDto getConfig(HttpMethod method, String url) {
-        LocalDateTime now = LocalDateTime.now();
+        var now = LocalDateTime.now();
         if (flagTime == null || now.isAfter(flagTime.plusSeconds(60))) {
             flagTime = now;
             hashConfigs = getHashConfigs();
@@ -295,8 +281,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 先进行哈希匹配
-        String path = method.name() + ":" + url;
-        InterfaceDto config = hashConfigs.getOrDefault(Util.md5(path), null);
+        var path = method.name() + ":" + url;
+        var config = hashConfigs.getOrDefault(Util.md5(path), null);
 
         // 哈希匹配失败后进行正则匹配
         return config == null ? regConfigs.stream().filter(i -> path.matches(i.getRegular())).findAny().orElse(null) : config;
@@ -308,13 +294,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置表
      */
     private Map<String, InterfaceDto> getHashConfigs() {
-        String json = Redis.get("Config:Interface");
+        var json = Redis.get("Config:Interface");
         List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
         Map<String, InterfaceDto> map = new HashMap<>(list.size());
-        for (InterfaceDto config : list) {
-            String url = config.getUrl();
+        for (var config : list) {
+            var url = config.getUrl();
             if (!url.contains("{")) {
-                String hash = Util.md5(config.getMethod() + ":" + config.getUrl());
+                var hash = Util.md5(config.getMethod() + ":" + config.getUrl());
                 map.put(hash, config);
             }
         }
@@ -328,14 +314,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置表
      */
     private List<InterfaceDto> getRegularConfigs() {
-        String json = Redis.get("Config:Interface");
+        var json = Redis.get("Config:Interface");
         List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
-        for (InterfaceDto config : list) {
-            String method = config.getMethod();
-            String url = config.getUrl();
+        for (var config : list) {
+            var method = config.getMethod();
+            var url = config.getUrl();
             if (url.contains("{")) {
                 // 此正则表达式仅支持32位UUID或整形/长整形数字作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
-                String regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/([0-9a-f]{32}|[0-9]{1,19})");
+                var regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/([0-9a-f]{32}|[0-9]{1,19})");
                 config.setRegular(regular);
             }
         }
