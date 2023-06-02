@@ -114,12 +114,20 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 私有接口验证Token,授权接口鉴权
         var token = headers.getFirst("Authorization");
-        var isVerified = verify(token, config.getAuthCode());
-        if (!isVerified) {
+        if (Util.isEmpty(token)) {
+            reply = ReplyHelper.fail(requestId, "Token不存在");
+            return initResponse(exchange);
+        }
+
+        var verify = new Verify(requestId, token, fingerprint);
+        reply = verify.compare(config.getAuthCode());
+        if (!reply.getSuccess()) {
+            Redis.deleteKey("Surplus:" + limitKey);
             return initResponse(exchange);
         }
 
         // 请求头附加用户信息
+        loginInfo = verify.getLoinInfo();
         request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
         return chain.filter(exchange);
     }
@@ -132,30 +140,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         return 1;
-    }
-
-    /**
-     * 验证用户令牌并鉴权
-     *
-     * @param token    令牌
-     * @param authCode 接口授权码
-     * @return 是否通过验证
-     */
-    private boolean verify(String token, String authCode) {
-        if (!Util.isNotEmpty(token)) {
-            reply = ReplyHelper.invalidToken(requestId);
-            return false;
-        }
-
-        var verify = new Verify(requestId, token, fingerprint);
-        reply = verify.compare(authCode);
-        if (!reply.getSuccess()) {
-            Redis.deleteKey("Surplus:" + limitKey);
-            return false;
-        }
-
-        loginInfo = verify.getLoinInfo();
-        return true;
     }
 
     /**
