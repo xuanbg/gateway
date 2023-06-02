@@ -115,7 +115,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         // 私有接口验证Token,授权接口鉴权
         var token = headers.getFirst("Authorization");
         if (Util.isEmpty(token)) {
-            reply = ReplyHelper.fail(requestId, "Token不存在");
+            reply = ReplyHelper.invalidToken(requestId);
             return initResponse(exchange);
         }
 
