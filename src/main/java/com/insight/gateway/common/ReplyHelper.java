@@ -1,5 +1,6 @@
 package com.insight.gateway.common;
 
+import com.insight.utils.Util;
 import com.insight.utils.pojo.base.Reply;
 
 /**
@@ -148,9 +149,11 @@ public final class ReplyHelper {
      * @return Reply
      */
     public static Reply tooOften(String requestId, String msg) {
-        TOO_OFTEN_REPLY.setMessage(msg);
-        TOO_OFTEN_REPLY.setOption(requestId);
+        if (Util.isNotEmpty(msg)) {
+            TOO_OFTEN_REPLY.setMessage(msg);
+        }
 
+        TOO_OFTEN_REPLY.setOption(requestId);
         return TOO_OFTEN_REPLY;
     }
 }
