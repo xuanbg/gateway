@@ -206,9 +206,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         var key = "Limit:" + limitKey;
         var val = Redis.get(key);
-        if (!Util.isNotEmpty(val)) {
+        if (Util.isEmpty(val)) {
             Redis.set(key, "1", cycle.longValue());
-
             return false;
         }
 
@@ -219,10 +218,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return true;
         }
 
-        var expire = Redis.getExpire(key);
-        count++;
-        Redis.set(key, String.valueOf(count), expire);
-
+        Redis.set(key, String.valueOf(count + 1));
         return false;
     }
 
