@@ -199,7 +199,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @param msg   消息
      * @return 是否限制访问
      */
-    private Boolean isLimited(long cycle, int max, String msg) {
+    private Boolean isLimited(Integer cycle, Integer max, String msg) {
         if (0 >= cycle || 0 >= max) {
             return false;
         }
@@ -207,7 +207,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var key = "Limit:" + limitKey;
         var val = Redis.get(key);
         if (!Util.isNotEmpty(val)) {
-            Redis.set(key, "1", cycle);
+            Redis.set(key, "1", cycle.longValue());
 
             return false;
         }
@@ -219,8 +219,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return true;
         }
 
+        var expire = Redis.getExpire(key);
         count++;
-        Redis.set(key, String.valueOf(count));
+        Redis.set(key, String.valueOf(count), expire);
 
         return false;
     }
