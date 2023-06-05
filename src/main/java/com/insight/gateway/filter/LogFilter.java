@@ -26,7 +26,6 @@ import reactor.core.publisher.Mono;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -157,19 +156,21 @@ public class LogFilter implements GlobalFilter, Ordered {
             return null;
         }
 
-        AtomicReference<String> ip = new AtomicReference<>(headers.getFirst("X-Real-IP"));
-        if (ip.get() == null || ip.get().isEmpty()) {
-            ip.set(headers.getFirst("X-Forwarded-For"));
+        var ip = headers.getFirst("WL-Proxy-Client-IP");
+        if (Util.isNotEmpty(ip)){
+            return ip;
         }
 
-        if (ip.get() == null || ip.get().isEmpty()) {
-            ip.set(headers.getFirst("Proxy-Client-IP"));
+        ip = headers.getFirst("X-Forwarded-For");
+        if (Util.isNotEmpty(ip)){
+            return ip;
         }
 
-        if (ip.get() == null || ip.get().isEmpty()) {
-            ip.set(headers.getFirst("WL-Proxy-Client-IP"));
+        ip = headers.getFirst("X-Real-IP");
+        if (Util.isNotEmpty(ip)){
+            return ip;
         }
 
-        return ip.get();
+        return null;
     }
 }
