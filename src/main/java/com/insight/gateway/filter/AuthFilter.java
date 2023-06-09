@@ -86,9 +86,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return initResponse(exchange);
         }
 
-        // 设置打印返回值标志
-        exchange.getAttributes().put("logResult", config.getLogResult());
-
         // 接口限流
         if (isLimited(config, key)) {
             return initResponse(exchange);
@@ -107,7 +104,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
             }
         }
 
-        // 放行公共接口
+        // 设置打印返回值标志, 放行公共接口
+        exchange.getAttributes().put("logResult", config.getLogResult());
         if (!config.getVerify()) {
             return chain.filter(exchange);
         }
