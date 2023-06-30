@@ -8,7 +8,6 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -37,26 +36,26 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpResponse originalResponse = exchange.getResponse();
-        ServerHttpResponseDecorator responseDecorator = new ServerHttpResponseDecorator(originalResponse) {
+        var originalResponse = exchange.getResponse();
+        var responseDecorator = new ServerHttpResponseDecorator(originalResponse) {
 
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
                 String requestId = exchange.getAttribute("requestId");
                 Boolean logResult = exchange.getAttribute("logResult");
                 if (body instanceof Flux && logResult != null && logResult) {
-                    Flux<? extends DataBuffer> fluxBody = Flux.from(body);
+                    var fluxBody = Flux.from(body);
 
                     return super.writeWith(fluxBody.buffer().map(dataBuffers -> {
                         List<String> list = new ArrayList<>();
                         dataBuffers.forEach(dataBuffer -> {
-                            byte[] content = new byte[dataBuffer.readableByteCount()];
+                            var content = new byte[dataBuffer.readableByteCount()];
                             dataBuffer.read(content);
                             DataBufferUtils.release(dataBuffer);
                             list.add(new String(content, StandardCharsets.UTF_8));
                         });
 
-                        String json = String.join("", list);
+                        var json = String.join("", list);
                         logger.info("requestId: {}. 返回数据: {}", requestId, json);
 
                         return bufferFactory().wrap(json.getBytes());
