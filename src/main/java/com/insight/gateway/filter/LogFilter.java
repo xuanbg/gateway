@@ -12,12 +12,12 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.server.HandlerStrategies;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -38,6 +38,11 @@ import java.util.stream.Collectors;
 public class LogFilter implements GlobalFilter, Ordered {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
+    private final ServerCodecConfigurer config;
+
+    public LogFilter(ServerCodecConfigurer config) {
+        this.config = config;
+    }
 
     /**
      * 请求信息日志过滤器
@@ -119,7 +124,7 @@ public class LogFilter implements GlobalFilter, Ordered {
             };
 
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
-            return ServerRequest.create(mutatedExchange, HandlerStrategies.withDefaults().messageReaders()).bodyToMono(String.class).doOnNext(body -> {
+            return ServerRequest.create(mutatedExchange, config.getReaders()).bodyToMono(String.class).doOnNext(body -> {
                 String requestId = exchange.getAttribute("requestId");
                 if (Pattern.matches("^\\[.*]$", body)) {
                     List<Object> list = Json.toList(body, Object.class);
@@ -157,17 +162,17 @@ public class LogFilter implements GlobalFilter, Ordered {
         }
 
         var ip = headers.getFirst("WL-Proxy-Client-IP");
-        if (Util.isNotEmpty(ip)){
+        if (Util.isNotEmpty(ip)) {
             return ip;
         }
 
         ip = headers.getFirst("X-Forwarded-For");
-        if (Util.isNotEmpty(ip)){
+        if (Util.isNotEmpty(ip)) {
             return ip;
         }
 
         ip = headers.getFirst("X-Real-IP");
-        if (Util.isNotEmpty(ip)){
+        if (Util.isNotEmpty(ip)) {
             return ip;
         }
 
