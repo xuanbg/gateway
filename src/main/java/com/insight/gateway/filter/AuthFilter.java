@@ -276,10 +276,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
         Map<String, InterfaceDto> map = new HashMap<>(list.size());
         for (var config : list) {
             var url = config.getUrl();
-            if (!url.contains("{")) {
-                var hash = Util.md5(config.getMethod() + ":" + config.getUrl());
-                map.put(hash, config);
+            if (url.contains("{") || url.contains("*")) {
+                continue;
             }
+
+            var hash = Util.md5(config.getMethod() + ":" + config.getUrl());
+            map.put(hash, config);
         }
 
         return map;
@@ -296,7 +298,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         for (var config : list) {
             var method = config.getMethod();
             var url = config.getUrl();
-            if (url.contains("{")) {
+            if (url.contains("{") || url.contains("*")) {
                 // 此正则表达式仅支持32位UUID或整形/长整形数字作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
                 var regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/([0-9a-f]{32}|[0-9]{1,19})");
                 config.setRegular(regular);

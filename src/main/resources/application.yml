@@ -22,6 +22,15 @@ spring:
 spring:
   cloud:
     consul:
+      host: 192.168.1.94
+  config:
+    activate:
+      on-profile: test
+    import: optional:consul:192.168.1.94:8500
+---
+spring:
+  cloud:
+    consul:
       config:
         acl-token: 877ceaf8-e219-8474-dbb5-f92200235f92
       host: 192.168.160.8
