@@ -82,7 +82,7 @@ public class Verify {
         }
 
         // 如果Token失效或过期时间大于一半,则不更新过期时间和失效时间.
-        if (basis.isFailure() || !basis.isHalfLife()) {
+        if (!basis.isHalfLife()) {
             return;
         }
 
@@ -90,9 +90,8 @@ public class Verify {
         long life = basis.getLife();
         var now = LocalDateTime.now();
         basis.setExpiryTime(now.plusSeconds(timeOut + life));
-        basis.setFailureTime(now.plusSeconds(timeOut + life * 12));
 
-        var expire = timeOut + life * 12;
+        var expire = timeOut + life;
         Redis.set("Token:" + tokenId, basis.toString(), expire);
     }
 
@@ -129,10 +128,6 @@ public class Verify {
 
         if (basis.isExpiry()) {
             return ReplyHelper.expiredToken(requestId);
-        }
-
-        if (basis.isFailure()) {
-            return ReplyHelper.invalidToken(requestId);
         }
 
         // 无需鉴权,返回成功
