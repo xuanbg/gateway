@@ -111,10 +111,6 @@ public class Verify {
             return ReplyHelper.forbid(requestId);
         }
 
-        if (loginElsewhere()) {
-            return ReplyHelper.fail(requestId, "您的账号已在其他设备登录");
-        }
-
         // 验证令牌
         if (basis.getVerifySource()) {
             if (!basis.verifyTokenHash(hash)) {
@@ -183,24 +179,6 @@ public class Verify {
         var json = Redis.get(key);
 
         return Json.toBean(json, TokenData.class);
-    }
-
-    /**
-     * 用户是否已在其他设备登录
-     *
-     * @return 是否已在其他设备登录
-     */
-    private boolean loginElsewhere() {
-        Long appId = basis.getAppId();
-        var type = Redis.get("App:" + appId, "SignInType");
-        if (!Boolean.parseBoolean(type)) {
-            return false;
-        }
-
-        var key = "UserToken:" + userId;
-        var value = Redis.get(key, appId.toString());
-
-        return !tokenId.equals(value);
     }
 
     /**
