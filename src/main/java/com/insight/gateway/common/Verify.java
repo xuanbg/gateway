@@ -1,7 +1,6 @@
 package com.insight.gateway.common;
 
 import com.insight.utils.Json;
-import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.base.Reply;
@@ -20,11 +19,6 @@ import java.time.LocalDateTime;
 public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String requestId;
-
-    /**
-     * 令牌哈希值
-     */
-    private final String hash;
 
     /**
      * 令牌安全码
@@ -60,7 +54,6 @@ public class Verify {
      */
     public Verify(String requestId, String token, String fingerprint) {
         this.requestId = requestId;
-        hash = Util.md5(token + fingerprint);
         var accessToken = Json.toToken(token);
         if (accessToken == null) {
             logger.error("requestId: {}. 错误信息: {}", requestId, "提取验证信息失败。Token is:" + token);
@@ -106,24 +99,18 @@ public class Verify {
             return ReplyHelper.invalidToken(requestId);
         }
 
-        // 验证用户
-        if (invalid()) {
-            return ReplyHelper.forbid(requestId);
-        }
-
         // 验证令牌
-        if (basis.getVerifySource()) {
-            if (!basis.verifyTokenHash(hash)) {
-                return ReplyHelper.invalidToken(requestId);
-            }
-        } else {
-            if (!basis.verifySecretKey(secret)) {
-                return ReplyHelper.invalidToken(requestId);
-            }
+        if (!basis.verifySecretKey(secret)) {
+            return ReplyHelper.invalidToken(requestId);
         }
 
         if (basis.isExpiry()) {
             return ReplyHelper.expiredToken(requestId);
+        }
+
+        // 验证用户
+        if (invalid()) {
+            return ReplyHelper.forbid(requestId);
         }
 
         // 无需鉴权,返回成功
