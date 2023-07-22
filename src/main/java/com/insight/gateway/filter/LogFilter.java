@@ -126,15 +126,18 @@ public class LogFilter implements GlobalFilter, Ordered {
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, config.getReaders()).bodyToMono(String.class).doOnNext(body -> {
                 String requestId = exchange.getAttribute("requestId");
-                if (Pattern.matches("^\\[.*]$", body)) {
-                    List<Object> list = Json.toList(body, Object.class);
-                    log.setBody(list == null ? body : list);
-                } else if (Pattern.matches("^\\{.*}$", body)) {
-                    Map obj = Json.toMap(body);
-                    log.setBody(obj == null ? body : obj);
-                } else {
-                    log.setBody(body);
+                if (body.length() <= 2048) {
+                    if (Pattern.matches("^\\[.*]$", body)) {
+                        List<Object> list = Json.toList(body, Object.class);
+                        log.setBody(list == null ? body : list);
+                    } else if (Pattern.matches("^\\{.*}$", body)) {
+                        Map obj = Json.toMap(body);
+                        log.setBody(obj == null ? body : obj);
+                    } else {
+                        log.setBody(body);
+                    }
                 }
+
                 logger.info("requestId: {}. 请求参数：{}", requestId, log);
             }).then(chain.filter(mutatedExchange));
         });
