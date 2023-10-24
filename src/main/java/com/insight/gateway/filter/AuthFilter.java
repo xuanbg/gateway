@@ -143,7 +143,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 是否被限流
      *
-     * @param config 接口配置表
+     * @param config 接口配置
      * @param key    键值
      * @return 是否被限流
      */
@@ -153,20 +153,17 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         limitKey = Util.md5(fingerprint + "|" + key);
-        if (isLimited(config.getLimitGap())) {
-            return true;
-        }
-
-        return isLimited(config.getLimitCycle(), config.getLimitMax(), config.getMessage());
+        return isGapLimited(config) || isCycleLimited(config);
     }
 
     /**
      * 是否被限流(访问间隔小于最小时间间隔)
      *
-     * @param gap 访问最小时间间隔
+     * @param config 接口配置
      * @return 是否限制访问
      */
-    private boolean isLimited(long gap) {
+    private boolean isGapLimited(InterfaceDto config) {
+        var gap = Long.valueOf(config.getLimitGap());
         if (0 >= gap) {
             return false;
         }
@@ -185,19 +182,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
             Redis.set(key, now, gap);
         }
 
-        reply = ReplyHelper.tooOften(requestId);
+        reply = ReplyHelper.tooOften(requestId, config.getMessage());
         return true;
     }
 
     /**
      * 是否被限流(限流计时周期内超过最大访问次数)
      *
-     * @param cycle 限流计时周期(秒)
-     * @param max   限制次数/限流周期
-     * @param msg   消息
+     * @param config 接口配置
      * @return 是否限制访问
      */
-    private Boolean isLimited(Integer cycle, Integer max, String msg) {
+    private Boolean isCycleLimited(InterfaceDto config) {
+        var cycle = Long.valueOf(config.getLimitCycle());
+        var max = Long.valueOf(config.getLimitMax());
         if (0 >= cycle || 0 >= max) {
             return false;
         }
@@ -205,14 +202,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var key = "Limit:" + limitKey;
         var val = Redis.get(key);
         if (Util.isEmpty(val)) {
-            Redis.set(key, "1", cycle.longValue());
+            Redis.set(key, "1", cycle);
             return false;
         }
 
         // 读取访问次数,如次数超过限制,返回true,否则访问次数增加1次
         var count = Integer.parseInt(val);
         if (count > max) {
-            reply = ReplyHelper.tooOften(requestId, msg);
+            reply = ReplyHelper.tooOften(requestId, config.getMessage());
             return true;
         }
 
