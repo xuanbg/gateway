@@ -13,6 +13,12 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
  */
 @Configuration
 public class CorsConfig {
+
+    /**
+     * 跨域配置
+     *
+     * @return CorsWebFilter
+     */
     @Bean
     public CorsWebFilter corsFilter() {
         var config = new CorsConfiguration();

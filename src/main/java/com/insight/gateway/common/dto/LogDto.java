@@ -37,6 +37,11 @@ public class LogDto extends BaseXo {
     private Map<String, String> params;
 
     /**
+     * 请求体长度
+     */
+    private Integer bodyLength;
+
+    /**
      * 请求体数据
      */
     private Object body;
@@ -79,6 +84,14 @@ public class LogDto extends BaseXo {
 
     public void setParams(Map<String, String> params) {
         this.params = params;
+    }
+
+    public Integer getBodyLength() {
+        return bodyLength;
+    }
+
+    public void setBodyLength(Integer bodyLength) {
+        this.bodyLength = bodyLength;
     }
 
     public Object getBody() {

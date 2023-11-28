@@ -126,7 +126,9 @@ public class LogFilter implements GlobalFilter, Ordered {
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, config.getReaders()).bodyToMono(String.class).doOnNext(body -> {
                 String requestId = exchange.getAttribute("requestId");
-                if (body.length() <= 2048) {
+                if (body.length() > 1024) {
+                    log.setBody(body.substring(0, 1024).concat("..."));
+                } else {
                     if (Pattern.matches("^\\[.*]$", body)) {
                         List<Object> list = Json.toList(body, Object.class);
                         log.setBody(list == null ? body : list);
@@ -138,6 +140,7 @@ public class LogFilter implements GlobalFilter, Ordered {
                     }
                 }
 
+                log.setBodyLength(body.length());
                 logger.info("requestId: {}. 请求参数：{}", requestId, log);
             }).then(chain.filter(mutatedExchange));
         });
