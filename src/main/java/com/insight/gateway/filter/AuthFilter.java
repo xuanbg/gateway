@@ -8,7 +8,8 @@ import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.InterfaceDto;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.base.Reply;
-import com.insight.utils.redis.Redis;
+import com.insight.utils.redis.KeyOps;
+import com.insight.utils.redis.StringOps;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -95,12 +96,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
         if (config.getNeedToken()) {
             var redisKey = "SubmitToken:" + Util.md5(loginInfo.getId() + ":" + key);
             var submitToken = headers.getFirst("SubmitToken");
-            var id = Redis.get(redisKey);
+            var id = StringOps.get(redisKey);
             if (!Util.isNotEmpty(id) || !id.equals(submitToken)) {
                 reply = ReplyHelper.fail(requestId, "SubmitToken不存在");
                 return initResponse(exchange);
             } else {
-                Redis.deleteKey(redisKey);
+                KeyOps.delete(redisKey);
             }
         }
 
@@ -120,7 +121,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var verify = new Verify(requestId, token, fingerprint);
         reply = verify.compare(config.getAuthCode());
         if (!reply.getSuccess()) {
-            Redis.deleteKey("Surplus:" + limitKey);
+            KeyOps.delete("Surplus:" + limitKey);
             return initResponse(exchange);
         }
 
@@ -170,16 +171,16 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         var key = "Surplus:" + limitKey;
         var now = DateTime.formatCurrentTime();
-        var value = Redis.get(key);
+        var value = StringOps.get(key);
         if (!Util.isNotEmpty(value)) {
-            Redis.set(key, now, gap);
+            StringOps.set(key, now, gap);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
         var time = DateTime.parseDateTime(value);
         if (LocalDateTime.now().isBefore(time.plusSeconds(1))) {
-            Redis.set(key, now, gap);
+            StringOps.set(key, now, gap);
         }
 
         reply = ReplyHelper.tooOften(requestId, config.getMessage());
@@ -200,9 +201,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         var key = "Limit:" + limitKey;
-        var val = Redis.get(key);
+        var val = StringOps.get(key);
         if (Util.isEmpty(val)) {
-            Redis.set(key, "1", cycle);
+            StringOps.set(key, "1", cycle);
             return false;
         }
 
@@ -213,7 +214,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return true;
         }
 
-        Redis.set(key, String.valueOf(count + 1));
+        StringOps.set(key, String.valueOf(count + 1));
         return false;
     }
 
@@ -268,7 +269,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置表
      */
     private Map<String, InterfaceDto> getHashConfigs() {
-        var json = Redis.get("Config:Interface");
+        var json = StringOps.get("Config:Interface");
         List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
         Map<String, InterfaceDto> map = new HashMap<>(list.size());
         for (var config : list) {
@@ -290,7 +291,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置表
      */
     private List<InterfaceDto> getRegularConfigs() {
-        var json = Redis.get("Config:Interface");
+        var json = StringOps.get("Config:Interface");
         List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
         for (var config : list) {
             var method = config.getMethod();

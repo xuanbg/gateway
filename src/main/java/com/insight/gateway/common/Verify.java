@@ -5,7 +5,8 @@ import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.base.Reply;
 import com.insight.utils.pojo.user.User;
-import com.insight.utils.redis.Redis;
+import com.insight.utils.redis.HashOps;
+import com.insight.utils.redis.StringOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,9 +68,6 @@ public class Verify {
             return;
         }
 
-        userId = basis.getUserId();
-        var map = Redis.getEntity("User:" + userId);
-        user = Json.clone(map, User.class);
         if (!basis.getAutoRefresh()) {
             return;
         }
@@ -82,10 +80,9 @@ public class Verify {
         var timeOut = TokenData.TIME_OUT;
         long life = basis.getLife();
         var now = LocalDateTime.now();
-        basis.setExpiryTime(now.plusSeconds(timeOut + life));
-
         var expire = timeOut + life;
-        Redis.set("Token:" + tokenId, basis.toString(), expire);
+        basis.setExpiryTime(now.plusSeconds(expire));
+        StringOps.set("Token:" + tokenId, basis.toString(), expire);
     }
 
     /**
@@ -135,8 +132,7 @@ public class Verify {
      * @return 用户登录信息
      */
     public LoginInfo getLoinInfo() {
-        var data = Redis.getEntity("User:" + userId);
-        var loginInfo = Json.clone(data, LoginInfo.class);
+        var loginInfo = HashOps.entries("User:" + userId, LoginInfo.class);
 
         loginInfo.setAppId(basis.getAppId());
         loginInfo.setTenantId(basis.getTenantId());
@@ -162,10 +158,7 @@ public class Verify {
      * @return TokenInfo(可能为null)
      */
     private TokenData getToken() {
-        var key = "Token:" + tokenId;
-        var json = Redis.get(key);
-
-        return Json.toBean(json, TokenData.class);
+        return StringOps.get("Token:" + tokenId,TokenData.class);
     }
 
     /**
@@ -174,8 +167,7 @@ public class Verify {
      * @return 是否被禁用
      */
     private boolean invalid() {
-        var key = "User:" + userId;
-        var value = Redis.get(key, "invalid");
+        var value = HashOps.get("User:" + userId, "invalid");
         if (value == null) {
             return false;
         }
