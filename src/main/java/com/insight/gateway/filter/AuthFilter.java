@@ -249,7 +249,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private InterfaceDto getConfig(HttpMethod method, String url) {
         var now = LocalDateTime.now();
-        if (flagTime == null || now.isAfter(flagTime.plusSeconds(60))) {
+        if (flagTime == null || now.isAfter(flagTime.plusSeconds(60)) || hashConfigs == null || regConfigs == null) {
             flagTime = now;
             hashConfigs = getHashConfigs();
             regConfigs = getRegularConfigs();
