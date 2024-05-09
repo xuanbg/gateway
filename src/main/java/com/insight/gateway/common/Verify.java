@@ -3,6 +3,7 @@ package com.insight.gateway.common;
 import com.insight.utils.Json;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenData;
+import com.insight.utils.pojo.auth.TokenKey;
 import com.insight.utils.pojo.base.Reply;
 import com.insight.utils.pojo.user.User;
 import com.insight.utils.redis.HashOps;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * @author 宣炳刚
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String requestId;
+    private final TokenKey tokenKey;
 
     /**
      * 令牌安全码
@@ -37,16 +40,6 @@ public class Verify {
     private User user;
 
     /**
-     * 令牌ID
-     */
-    private String tokenId;
-
-    /**
-     * 用户ID
-     */
-    private Long userId;
-
-    /**
      * 构造方法
      *
      * @param requestId   请求ID
@@ -55,14 +48,13 @@ public class Verify {
      */
     public Verify(String requestId, String token, String fingerprint) {
         this.requestId = requestId;
-        var accessToken = Json.toToken(token);
-        if (accessToken == null) {
+        tokenKey = Json.toToken(token);
+        if (tokenKey == null) {
             logger.error("requestId: {}. 错误信息: {}", requestId, "提取验证信息失败。Token is:" + token);
             return;
         }
 
-        secret = accessToken.getSecret();
-        tokenId = accessToken.getId();
+        secret = tokenKey.getSecret();
         basis = getToken();
         if (basis == null) {
             return;
@@ -82,7 +74,7 @@ public class Verify {
         var now = LocalDateTime.now();
         var expire = timeOut + life;
         basis.setExpiryTime(now.plusSeconds(expire));
-        StringOps.set("Token:" + tokenId, basis.toString(), expire);
+        StringOps.set(tokenKey.getKey(), basis.toString(), expire);
     }
 
     /**
@@ -97,7 +89,7 @@ public class Verify {
         }
 
         // 验证令牌
-        if (!basis.verifySecretKey(secret)) {
+        if (!basis.verify(secret)) {
             return ReplyHelper.invalidToken(requestId);
         }
 
@@ -132,7 +124,7 @@ public class Verify {
      * @return 用户登录信息
      */
     public LoginInfo getLoinInfo() {
-        var loginInfo = HashOps.entries("User:" + userId, LoginInfo.class);
+        var loginInfo = HashOps.entries("User:" + tokenKey.getUserId(), LoginInfo.class);
 
         loginInfo.setAppId(basis.getAppId());
         loginInfo.setTenantId(basis.getTenantId());
@@ -149,7 +141,7 @@ public class Verify {
      * @return 是否同一用户
      */
     private boolean userIsEquals(Long userId) {
-        return this.userId.equals(userId);
+        return Objects.equals(tokenKey.getUserId(), userId);
     }
 
     /**
@@ -158,7 +150,7 @@ public class Verify {
      * @return TokenInfo(可能为null)
      */
     private TokenData getToken() {
-        return StringOps.get("Token:" + tokenId,TokenData.class);
+        return StringOps.get(tokenKey.getKey(), TokenData.class);
     }
 
     /**
@@ -167,7 +159,7 @@ public class Verify {
      * @return 是否被禁用
      */
     private boolean invalid() {
-        var value = HashOps.get("User:" + userId, "invalid");
+        var value = HashOps.get("User:" + tokenKey.getUserId(), "invalid");
         if (value == null) {
             return false;
         }
