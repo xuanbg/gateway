@@ -214,7 +214,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return true;
         }
 
-        StringOps.set(key, String.valueOf(count + 1));
+        StringOps.set(key, count + 1);
         return false;
     }
 

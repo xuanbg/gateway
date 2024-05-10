@@ -74,7 +74,7 @@ public class Verify {
         var now = LocalDateTime.now();
         var expire = timeOut + life;
         basis.setExpiryTime(now.plusSeconds(expire));
-        StringOps.set(tokenKey.getKey(), basis.toString(), expire);
+        StringOps.set(tokenKey.getKey(), basis, expire);
     }
 
     /**
