@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
  * @author 宣炳刚
@@ -55,7 +54,7 @@ public class Verify {
         }
 
         secret = tokenKey.getSecret();
-        basis = getToken();
+        basis = StringOps.get(tokenKey.getKey(), TokenData.class);
         if (basis == null) {
             return;
         }
@@ -65,16 +64,14 @@ public class Verify {
         }
 
         // 如果Token失效或过期时间大于一半,则不更新过期时间和失效时间.
-        if (!basis.isHalfLife()) {
-            return;
+        if (basis.isHalfLife()) {
+            var timeOut = TokenData.TIME_OUT;
+            long life = basis.getLife();
+            var now = LocalDateTime.now();
+            var expire = timeOut + life;
+            basis.setExpiryTime(now.plusSeconds(expire));
+            StringOps.set(tokenKey.getKey(), basis, expire);
         }
-
-        var timeOut = TokenData.TIME_OUT;
-        long life = basis.getLife();
-        var now = LocalDateTime.now();
-        var expire = timeOut + life;
-        basis.setExpiryTime(now.plusSeconds(expire));
-        StringOps.set(tokenKey.getKey(), basis, expire);
     }
 
     /**
@@ -133,24 +130,6 @@ public class Verify {
         loginInfo.setOrgName(basis.getOrgName());
         loginInfo.setAreaCode(basis.getAreaCode());
         return loginInfo;
-    }
-
-    /**
-     * 获取令牌中的用户ID
-     *
-     * @return 是否同一用户
-     */
-    private boolean userIsEquals(Long userId) {
-        return Objects.equals(tokenKey.getUserId(), userId);
-    }
-
-    /**
-     * 根据令牌ID获取缓存中的Token
-     *
-     * @return TokenInfo(可能为null)
-     */
-    private TokenData getToken() {
-        return StringOps.get(tokenKey.getKey(), TokenData.class);
     }
 
     /**
