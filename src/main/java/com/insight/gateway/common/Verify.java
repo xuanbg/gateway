@@ -1,6 +1,8 @@
 package com.insight.gateway.common;
 
+import com.insight.utils.DateTime;
 import com.insight.utils.Json;
+import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.auth.TokenKey;
@@ -10,6 +12,7 @@ import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.StringOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +25,9 @@ public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String requestId;
     private final TokenKey tokenKey;
+
+    @Autowired
+    private AuthClient client;
 
     /**
      * 令牌安全码
@@ -47,6 +53,7 @@ public class Verify {
      */
     public Verify(String requestId, String token, String fingerprint) {
         this.requestId = requestId;
+
         tokenKey = Json.toToken(token);
         if (tokenKey == null) {
             logger.error("requestId: {}. 错误信息: {}", requestId, "提取验证信息失败。Token is:" + token);
@@ -65,11 +72,8 @@ public class Verify {
 
         // 如果Token失效或过期时间大于一半,则不更新过期时间和失效时间.
         if (basis.isHalfLife()) {
-            var timeOut = TokenData.TIME_OUT;
-            long life = basis.getLife();
-            var now = LocalDateTime.now();
-            var expire = timeOut + life;
-            basis.setExpiryTime(now.plusSeconds(expire));
+            var expire = TokenData.TIME_OUT + basis.getLife();
+            basis.setExpiryTime(LocalDateTime.now().plusSeconds(expire));
             StringOps.set(tokenKey.getKey(), basis, expire);
         }
     }
@@ -153,7 +157,16 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
+        if (basis.isPermitExpiry()) {
+            var reply = client.getAuthCodes();
+            basis.setPermitFuncs(reply.getListFromData());
+            basis.setPermitTime(LocalDateTime.now());
+
+            var expire = DateTime.getRemainSeconds(basis.getExpiryTime());
+            StringOps.set(tokenKey.getKey(), basis, expire);
+        }
+
         var permits = basis.getPermitFuncs();
-        return permits != null && !permits.isEmpty() && permits.stream().anyMatch(authCode::equalsIgnoreCase);
+        return Util.isNotEmpty(permits) && permits.stream().anyMatch(authCode::equalsIgnoreCase);
     }
 }
