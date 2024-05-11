@@ -1,6 +1,5 @@
 package com.insight.gateway.common;
 
-import com.insight.utils.DateTime;
 import com.insight.utils.Json;
 import com.insight.utils.Util;
 import com.insight.utils.pojo.auth.LoginInfo;
@@ -12,7 +11,6 @@ import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.StringOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 
@@ -25,9 +23,6 @@ public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String requestId;
     private final TokenKey tokenKey;
-
-    @Autowired
-    private AuthClient client;
 
     /**
      * 令牌安全码
@@ -157,14 +152,14 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-        if (basis.isPermitExpiry()) {
-            var reply = client.getAuthCodes();
-            basis.setPermitFuncs(reply.getListFromData());
-            basis.setPermitTime(LocalDateTime.now());
-
-            var expire = DateTime.getRemainSeconds(basis.getExpiryTime());
-            StringOps.set(tokenKey.getKey(), basis, expire);
-        }
+//        if (basis.isPermitExpiry()) {
+//            var reply = client.getAuthCodes();
+//            basis.setPermitFuncs(reply.getListFromData());
+//            basis.setPermitTime(LocalDateTime.now());
+//
+//            var expire = DateTime.getRemainSeconds(basis.getExpiryTime());
+//            StringOps.set(tokenKey.getKey(), basis, expire);
+//        }
 
         var permits = basis.getPermitFuncs();
         return Util.isNotEmpty(permits) && permits.stream().anyMatch(authCode::equalsIgnoreCase);
