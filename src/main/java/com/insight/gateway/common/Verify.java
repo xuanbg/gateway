@@ -1,6 +1,7 @@
 package com.insight.gateway.common;
 
 import com.insight.utils.DateTime;
+import com.insight.utils.EnvUtil;
 import com.insight.utils.Json;
 import com.insight.utils.Util;
 import com.insight.utils.http.HttpUtil;
@@ -8,12 +9,10 @@ import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.auth.TokenKey;
 import com.insight.utils.pojo.base.Reply;
-import com.insight.utils.pojo.user.User;
 import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.StringOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -29,12 +28,6 @@ public class Verify {
     private final TokenKey tokenKey;
 
     /**
-     * 授权码接口URL
-     */
-    @Value("${insight.authCodeInterface}")
-    private String authCodeInterface;
-
-    /**
      * 令牌安全码
      */
     private String secret;
@@ -43,11 +36,6 @@ public class Verify {
      * 缓存中的令牌信息
      */
     private TokenData basis;
-
-    /**
-     * 缓存中的用户信息
-     */
-    private User user;
 
     /**
      * 构造方法
@@ -118,9 +106,8 @@ public class Verify {
             return ReplyHelper.success();
         }
 
-        var account = user.getAccount();
-        logger.warn("requestId: {}. 告警信息: {}", requestId, "用户『" + account + "』试图使用未授权的功能:" + authCode);
-
+        var name = HashOps.get("User:" + tokenKey.getUserId(), "name");
+        logger.warn("requestId: {}. 告警信息: 用户『{}({})』试图使用未授权的功能: {}", requestId, name, tokenKey.getUserId(), authCode);
         return ReplyHelper.noAuth(requestId);
     }
 
@@ -148,10 +135,6 @@ public class Verify {
      */
     private boolean invalid() {
         var value = HashOps.get("User:" + tokenKey.getUserId(), "invalid");
-        if (value == null) {
-            return false;
-        }
-
         return Boolean.parseBoolean(value);
     }
 
@@ -166,7 +149,8 @@ public class Verify {
             var headers = new HashMap<String, String>();
             headers.put("loginInfo", Json.toBase64(getLoinInfo()));
 
-            var reply = HttpUtil.get(authCodeInterface, headers, Reply.class);
+            var url = EnvUtil.getValue("insight.authCodeInterface");
+            var reply = HttpUtil.get(url, headers, Reply.class);
             basis.setPermitFuncs(reply.getListFromData(String.class));
             basis.setPermitTime(LocalDateTime.now());
 
