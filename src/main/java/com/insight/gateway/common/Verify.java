@@ -13,6 +13,7 @@ import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.StringOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -26,6 +27,12 @@ public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String requestId;
     private final TokenKey tokenKey;
+
+    /**
+     * 授权码接口URL
+     */
+    @Value("${insight.authCodeInterface}")
+    private String authCodeInterface;
 
     /**
      * 令牌安全码
@@ -156,11 +163,10 @@ public class Verify {
      */
     private Boolean isPermit(String authCode) {
         if (basis.isPermitExpiry()) {
-            var url = "http://localhost:6215/base/auth/v1.0/tokens/permits";
             var headers = new HashMap<String, String>();
             headers.put("loginInfo", Json.toBase64(getLoinInfo()));
 
-            var reply = HttpUtil.get(url, headers, Reply.class);
+            var reply = HttpUtil.get(authCodeInterface, headers, Reply.class);
             basis.setPermitFuncs(reply.getListFromData(String.class));
             basis.setPermitTime(LocalDateTime.now());
 
