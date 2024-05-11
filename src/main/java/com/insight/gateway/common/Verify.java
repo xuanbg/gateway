@@ -1,7 +1,9 @@
 package com.insight.gateway.common;
 
+import com.insight.utils.DateTime;
 import com.insight.utils.Json;
 import com.insight.utils.Util;
+import com.insight.utils.http.HttpUtil;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.auth.TokenKey;
@@ -13,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 /**
  * @author 宣炳刚
@@ -152,14 +155,18 @@ public class Verify {
      * @return 功能是否授权给用户
      */
     private Boolean isPermit(String authCode) {
-//        if (basis.isPermitExpiry()) {
-//            var reply = client.getAuthCodes();
-//            basis.setPermitFuncs(reply.getListFromData());
-//            basis.setPermitTime(LocalDateTime.now());
-//
-//            var expire = DateTime.getRemainSeconds(basis.getExpiryTime());
-//            StringOps.set(tokenKey.getKey(), basis, expire);
-//        }
+        if (basis.isPermitExpiry()) {
+            var url = "http://localhost:6215/base/auth/v1.0/tokens/permits";
+            var headers = new HashMap<String, String>();
+            headers.put("loginInfo", Json.toBase64(getLoinInfo()));
+
+            var reply = HttpUtil.get(url, headers, Reply.class);
+            basis.setPermitFuncs(reply.getListFromData(String.class));
+            basis.setPermitTime(LocalDateTime.now());
+
+            var expire = DateTime.getRemainSeconds(basis.getExpiryTime());
+            StringOps.set(tokenKey.getKey(), basis, expire);
+        }
 
         var permits = basis.getPermitFuncs();
         return Util.isNotEmpty(permits) && permits.stream().anyMatch(authCode::equalsIgnoreCase);
