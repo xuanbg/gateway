@@ -24,10 +24,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author 宣炳刚
@@ -260,48 +258,5 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         return Json.toBean(config, InterfaceDto.class);
-    }
-
-    /**
-     * 获取接口配置哈希表
-     *
-     * @return 接口配置表
-     */
-    private Map<String, InterfaceDto> getHashConfigs() {
-        var json = StringOps.get("Config:Interface");
-        List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
-        Map<String, InterfaceDto> map = new HashMap<>(list.size());
-        for (var config : list) {
-            var url = config.getUrl();
-            if (url.contains("{") || url.contains("*")) {
-                continue;
-            }
-
-            var hash = Util.md5(config.getMethod() + ":" + config.getUrl());
-            map.put(hash, config);
-        }
-
-        return map;
-    }
-
-    /**
-     * 获取接口配置正则表
-     *
-     * @return 接口配置表
-     */
-    private List<InterfaceDto> getRegularConfigs() {
-        var json = StringOps.get("Config:Interface");
-        List<InterfaceDto> list = Json.toList(json, InterfaceDto.class);
-        for (var config : list) {
-            var method = config.getMethod();
-            var url = config.getUrl();
-            if (url.contains("{") || url.contains("*")) {
-                // 此正则表达式仅支持32位UUID或整形/长整形数字作为路径参数,如使用其他类型的参数.请修改正则表达式以匹配参数类型
-                var regular = method + ":" + url.replaceAll("/\\{[a-zA-Z]+}", "/([0-9a-f]{32}|[0-9]{1,19})");
-                config.setRegular(regular);
-            }
-        }
-
-        return list.stream().filter(i -> i.getRegular() != null).collect(Collectors.toList());
     }
 }
