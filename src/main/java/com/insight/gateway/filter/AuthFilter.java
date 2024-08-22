@@ -249,7 +249,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置
      */
     private InterfaceDto getConfig(HttpMethod method, String uri) {
-        var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{id}");
+        var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{}");
         var hash = Util.md5(method.name() + ":" + url);
         var config = HashOps.get("Config:Interface", hash);
         if (config == null) {
