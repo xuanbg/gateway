@@ -3,11 +3,14 @@ package com.insight.gateway.filter;
 import com.insight.gateway.common.ReplyHelper;
 import com.insight.gateway.common.Verify;
 import com.insight.utils.DateTime;
+import com.insight.utils.EnvUtil;
 import com.insight.utils.Json;
 import com.insight.utils.Util;
+import com.insight.utils.http.HttpUtil;
 import com.insight.utils.pojo.auth.InterfaceDto;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.base.Reply;
+import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.KeyOps;
 import com.insight.utils.redis.StringOps;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -244,23 +247,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * 通过匹配URL获取接口配置
      *
      * @param method 请求方法
-     * @param url    请求URL
+     * @param uri    请求URL
      * @return 接口配置
      */
-    private InterfaceDto getConfig(HttpMethod method, String url) {
-        var now = LocalDateTime.now();
-        if (flagTime == null || now.isAfter(flagTime.plusSeconds(60)) || hashConfigs == null || regConfigs == null) {
-            flagTime = now;
-            hashConfigs = getHashConfigs();
-            regConfigs = getRegularConfigs();
+    private InterfaceDto getConfig(HttpMethod method, String uri) {
+        var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{id}");
+        var hash = Util.md5(method.name() + ":" + url);
+        var config = HashOps.get("Config:Interface", hash);
+        if (config == null) {
+            HttpUtil.get(EnvUtil.getValue("insight.loadInterface"), Reply.class);
+            config = HashOps.get("Config:Interface", hash);
         }
 
-        // 先进行哈希匹配
-        var path = method.name() + ":" + url;
-        var config = hashConfigs.getOrDefault(Util.md5(path), null);
-
-        // 哈希匹配失败后进行正则匹配
-        return config == null ? regConfigs.stream().filter(i -> path.matches(i.getRegular())).findAny().orElse(null) : config;
+        return Json.toBean(config, InterfaceDto.class);
     }
 
     /**
