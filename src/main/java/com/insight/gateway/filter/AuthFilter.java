@@ -253,7 +253,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var config = hashConfigs.get(hash);
         if (config == null) {
             HttpUtil.get(EnvUtil.getValue("insight.loadInterface"), Reply.class);
-            var list = HashOps.values("insight.loadInterface", InterfaceDto.class);
+            var list = HashOps.values("Config:Interface", InterfaceDto.class);
             list.forEach(i -> hashConfigs.put(i.getHash(), i));
             config = hashConfigs.get(hash);
         }
