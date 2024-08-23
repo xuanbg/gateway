@@ -24,8 +24,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author 宣炳刚
@@ -34,7 +32,6 @@ import java.util.Map;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private final Map<String, InterfaceDto> hashConfigs = new HashMap<>();
 
     /**
      * 令牌持有人信息
@@ -248,16 +245,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 接口配置
      */
     private InterfaceDto getConfig(HttpMethod method, String uri) {
+        var key = "Config:Interface";
         var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{}");
-        var key = Util.md5(method.name() + ":" + url);
-        var config = hashConfigs.get(key);
-        if (config != null) {
-            return config;
+        var hash = Util.md5(method.name() + ":" + url);
+        if (HashOps.hasKey(key, hash)) {
+            return HashOps.get(key, hash, InterfaceDto.class);
         }
 
         HttpUtil.get(EnvUtil.getValue("insight.loadInterface"), Reply.class);
-        var list = HashOps.values("Config:Interface", InterfaceDto.class);
-        list.forEach(i -> hashConfigs.put(i.getHash(), i));
-        return hashConfigs.get(key);
+        return HashOps.get(key, hash, InterfaceDto.class);
     }
 }
