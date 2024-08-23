@@ -117,7 +117,8 @@ public class Verify {
      * @return 用户登录信息
      */
     public LoginInfo getLoinInfo() {
-        var loginInfo = HashOps.entries("User:" + tokenKey.getUserId(), LoginInfo.class);
+        var map = HashOps.entries("User:" + tokenKey.getUserId());
+        var loginInfo = Json.clone(map, LoginInfo.class);
 
         loginInfo.setAppId(basis.getAppId());
         loginInfo.setTenantId(basis.getTenantId());
