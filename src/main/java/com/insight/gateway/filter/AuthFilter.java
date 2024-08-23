@@ -6,7 +6,7 @@ import com.insight.utils.DateTime;
 import com.insight.utils.EnvUtil;
 import com.insight.utils.Json;
 import com.insight.utils.Util;
-import com.insight.utils.http.HttpUtil;
+import com.insight.utils.http.HttpClient;
 import com.insight.utils.pojo.auth.InterfaceDto;
 import com.insight.utils.pojo.auth.LoginInfo;
 import com.insight.utils.pojo.base.Reply;
@@ -248,11 +248,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var key = "Config:Interface";
         var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{}");
         var hash = Util.md5(method.name() + ":" + url);
-        if (HashOps.hasKey(key, hash)) {
-            return HashOps.get(key, hash, InterfaceDto.class);
+        if (!HashOps.hasKey(key, hash)) {
+            HttpClient.get(EnvUtil.getValue("insight.loadInterface"));
         }
 
-        HttpUtil.get(EnvUtil.getValue("insight.loadInterface"), Reply.class);
         return HashOps.get(key, hash, InterfaceDto.class);
     }
 }
