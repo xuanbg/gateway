@@ -249,15 +249,15 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private InterfaceDto getConfig(HttpMethod method, String uri) {
         var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{}");
-        var hash = Util.md5(method.name() + ":" + url);
-        var config = hashConfigs.get(hash);
-        if (config == null) {
-            HttpUtil.get(EnvUtil.getValue("insight.loadInterface"), Reply.class);
-            var list = HashOps.values("Config:Interface", InterfaceDto.class);
-            list.forEach(i -> hashConfigs.put(i.getHash(), i));
-            config = hashConfigs.get(hash);
+        var key = Util.md5(method.name() + ":" + url);
+        var config = hashConfigs.get(key);
+        if (config != null) {
+            return config;
         }
 
-        return config;
+        HttpUtil.get(EnvUtil.getValue("insight.loadInterface"), Reply.class);
+        var list = HashOps.values("Config:Interface", InterfaceDto.class);
+        list.forEach(i -> hashConfigs.put(i.getHash(), i));
+        return hashConfigs.get(key);
     }
 }
