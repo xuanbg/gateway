@@ -249,13 +249,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var key = "Config:Interface";
         var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{}");
         var hash = Util.md5(method.name() + ":" + url);
-        var config = HashOps.get(key, hash, InterfaceDto.class);
-        if (config != null){
-            return config;
-        }
-
         var now = LocalDateTime.now();
-        if (now.isAfter(refreshTime.plusMinutes(5)) && !HashOps.hasKey(key, hash)) {
+        if (!HashOps.hasKey(key, hash) && now.isAfter(refreshTime.plusMinutes(5))) {
             refreshTime = now;
             HttpClient.get(EnvUtil.getValue("insight.loadInterface"));
         }
