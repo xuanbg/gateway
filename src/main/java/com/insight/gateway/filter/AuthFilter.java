@@ -32,7 +32,7 @@ import java.time.LocalDateTime;
  */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-    private LocalDateTime refreshTime = LocalDateTime.now();
+    private LocalDateTime refreshTime;
 
     /**
      * 令牌持有人信息
@@ -250,7 +250,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         var url = uri.replaceAll("/([0-9a-f]{32}|[0-9]{1,19})", "/{}");
         var hash = Util.md5(method.name() + ":" + url);
         var now = LocalDateTime.now();
-        if (!HashOps.hasKey(key, hash) && now.isAfter(refreshTime.plusMinutes(5))) {
+        if (!HashOps.hasKey(key, hash) && (refreshTime == null || now.isAfter(refreshTime.plusMinutes(5)))) {
             refreshTime = now;
             HttpClient.get(EnvUtil.getValue("insight.loadInterface"));
         }
