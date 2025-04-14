@@ -118,7 +118,7 @@ public class Verify {
      */
     public LoginInfo getLoinInfo() {
         var map = HashOps.entries("User:" + tokenKey.getUserId());
-        var loginInfo = Json.clone(map, LoginInfo.class);
+        var loginInfo = Json.toBean(map, LoginInfo.class);
 
         loginInfo.setAppId(basis.getAppId());
         loginInfo.setTenantId(basis.getTenantId());

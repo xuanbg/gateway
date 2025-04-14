@@ -11,13 +11,10 @@ import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.codec.ServerCodecConfigurer;
-import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -53,45 +50,52 @@ public class LogFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        HttpHeaders headers = request.getHeaders();
-        String source = getIp(headers);
+        var request = exchange.getRequest();
+        var headers = request.getHeaders();
+        var source = getIp(headers);
         if (source == null || source.isEmpty()) {
             source = request.getRemoteAddress().getAddress().getHostAddress();
         }
 
-        String token = headers.getFirst("Authorization");
-        String requestId = Util.uuid();
-        String fingerprint = Util.md5(Util.isEmpty(token) ? source + headers.getFirst("User-Agent") : token);
+        var token = headers.getFirst("Authorization");
+        var userAgent = headers.getFirst("User-Agent");
+        var requestId = Util.uuid();
+        var fingerprint = Util.md5(source + userAgent + token);
         exchange.getAttributes().put("requestId", requestId);
         request.mutate().header("requestId", requestId).build();
         request.mutate().header("fingerprint", fingerprint).build();
 
         // 处理请求头
-        Map<String, String> headerMap = headers.toSingleValueMap().entrySet().stream()
+        var headerMap = headers.toSingleValueMap().entrySet().stream()
                 .filter(e -> allowHeaders.stream().anyMatch(i -> i.equalsIgnoreCase(e.getKey())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // 构造入参对象
-        HttpMethod method = request.getMethod();
-        RequestPath path = request.getPath();
-        LogDto log = new LogDto();
+        var method = request.getMethod();
+        var path = request.getPath();
+        var log = new LogDto();
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());
         log.setHeaders(headerMap);
 
         // 读取请求参数
-        MultiValueMap<String, String> params = request.getQueryParams();
+        var params = request.getQueryParams();
         log.setParams(params.isEmpty() ? null : params.toSingleValueMap());
 
         // 如Body不为空,则将body内容加入日志
-        long length = headers.getContentLength();
+        var length = headers.getContentLength();
         if (length > 0) {
             return readBody(exchange, chain, log);
         }
 
-        logger.info("requestId: {}. 请求参数: {}", requestId, log);
+        if (Util.isEmpty(token)) {
+            logger.info("requestId: {}. 请求参数: {}", requestId, log);
+        } else {
+            var appId = Json.toToken(token).getAppId();
+            logger.info("requestId: {}. AppId: {}. 请求参数: {}", requestId, appId, log);
+        }
+
         return chain.filter(exchange);
     }
 
@@ -104,9 +108,9 @@ public class LogFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     private Mono<Void> readBody(ServerWebExchange exchange, GatewayFilterChain chain, LogDto log) {
-        Flux<DataBuffer> dataBufferFlux = exchange.getRequest().getBody();
+        var dataBufferFlux = exchange.getRequest().getBody();
         return DataBufferUtils.join(dataBufferFlux).flatMap(dataBuffer -> {
-            byte[] bytes = new byte[dataBuffer.readableByteCount()];
+            var bytes = new byte[dataBuffer.readableByteCount()];
             dataBuffer.read(bytes);
             DataBufferUtils.release(dataBuffer);
 
@@ -115,7 +119,7 @@ public class LogFilter implements GlobalFilter, Ordered {
                 @Override
                 public Flux<DataBuffer> getBody() {
                     return Flux.defer(() -> {
-                        DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+                        var buffer = exchange.getResponse().bufferFactory().wrap(bytes);
                         DataBufferUtils.retain(buffer);
 
                         return Flux.just(buffer);
@@ -123,11 +127,11 @@ public class LogFilter implements GlobalFilter, Ordered {
                 }
             };
 
-            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+            var mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, config.getReaders()).bodyToMono(String.class).doOnNext(body -> {
                 String requestId = exchange.getAttribute("requestId");
                 if (Pattern.matches("^\\[.*]$", body)) {
-                    List<Object> list = Json.toList(body, Object.class);
+                    var list = Json.toList(body, Object.class);
                     log.setBody(list == null ? body : list);
                 } else if (Pattern.matches("^\\{.*}$", body)) {
                     Map obj = Json.toMap(body);
