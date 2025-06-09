@@ -147,7 +147,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return 是否被限流
      */
     private boolean isLimited(InterfaceDto config, String key) {
-        if (!config.getLimit() || !Util.isNotEmpty(key)) {
+        if (Util.isEmpty(key) || !config.getLimit()) {
             return false;
         }
 
