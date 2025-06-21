@@ -45,11 +45,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private Reply reply;
 
     /**
-     * 用户特征串
-     */
-    private String fingerprint;
-
-    /**
      * 请求ID
      */
     private String requestId;
@@ -70,24 +65,28 @@ public class AuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         var request = exchange.getRequest();
         var headers = request.getHeaders();
+        var fingerprint = headers.getFirst("fingerprint");
+
         var response = exchange.getResponse();
         var responseHeaders = response.getHeaders();
-
-        fingerprint = headers.getFirst("fingerprint");
-        requestId = headers.getFirst("requestId");
         var method = request.getMethod();
 
         var path = request.getPath().value();
         var key = method + ":" + path;
         var config = getConfig(method, path);
+
+        requestId = headers.getFirst("requestId");
         if (config == null) {
             reply = ReplyHelper.fail(requestId, "不存在的URL: " + key);
             return initResponse(exchange);
         }
 
         // 接口限流
-        if (isLimited(config, key)) {
-            return initResponse(exchange);
+        if (Util.isNotEmpty(key) && config.getLimit()) {
+            limitKey = Util.md5(fingerprint + "|" + key);
+            if (isGapLimited(config) || isCycleLimited(config)) {
+                return initResponse(exchange);
+            }
         }
 
         // 验证提交数据临时Token
@@ -140,22 +139,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 是否被限流
-     *
-     * @param config 接口配置
-     * @param key    键值
-     * @return 是否被限流
-     */
-    private boolean isLimited(InterfaceDto config, String key) {
-        if (Util.isEmpty(key) || !config.getLimit()) {
-            return false;
-        }
-
-        limitKey = Util.md5(fingerprint + "|" + key);
-        return isGapLimited(config) || isCycleLimited(config);
-    }
-
-    /**
      * 是否被限流(访问间隔小于最小时间间隔)
      *
      * @param config 接口配置
@@ -167,17 +150,17 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return false;
         }
 
-        var key = "Surplus:" + limitKey;
         var now = DateTime.formatCurrentTime();
-        var value = StringOps.get(key);
-        if (!Util.isNotEmpty(value)) {
+        var key = "Surplus:" + limitKey;
+        if (!KeyOps.hasKey(key)){
             StringOps.set(key, now, gap);
             return false;
         }
 
         // 调用时间间隔低于1秒时,重置调用时间为当前时间作为惩罚
+        var value = StringOps.get(key);
         var time = DateTime.parseDateTime(value);
-        if (LocalDateTime.now().isBefore(time.plusSeconds(1))) {
+        if (LocalDateTime.now().isBefore(time.plusSeconds(gap))) {
             StringOps.set(key, now, gap);
         }
 
@@ -199,13 +182,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         var key = "Limit:" + limitKey;
-        var val = StringOps.get(key);
-        if (Util.isEmpty(val)) {
-            StringOps.set(key, "1", cycle);
+        if (!KeyOps.hasKey(key)){
+            StringOps.set(key, 1, cycle);
             return false;
         }
 
         // 读取访问次数,如次数超过限制,返回true,否则访问次数增加1次
+        var val = StringOps.get(key);
         var count = Integer.parseInt(val);
         if (count > max) {
             reply = ReplyHelper.tooOften(requestId, config.getMessage());

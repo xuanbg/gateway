@@ -59,6 +59,7 @@ public class LogFilter implements GlobalFilter, Ordered {
 
         var token = headers.getFirst("Authorization");
         var userAgent = headers.getFirst("User-Agent");
+        var path = request.getPath();
         var requestId = Util.uuid();
         var fingerprint = Util.md5(source + userAgent + token);
         exchange.getAttributes().put("requestId", requestId);
@@ -72,7 +73,6 @@ public class LogFilter implements GlobalFilter, Ordered {
 
         // 构造入参对象
         var method = request.getMethod();
-        var path = request.getPath();
         var log = new LogDto();
         log.setSource(source);
         log.setMethod(method.name());
