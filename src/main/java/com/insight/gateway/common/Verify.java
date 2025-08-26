@@ -6,6 +6,7 @@ import com.insight.utils.Json;
 import com.insight.utils.Util;
 import com.insight.utils.http.HttpUtil;
 import com.insight.utils.pojo.auth.LoginInfo;
+import com.insight.utils.pojo.auth.OpenId;
 import com.insight.utils.pojo.auth.TokenData;
 import com.insight.utils.pojo.auth.TokenKey;
 import com.insight.utils.pojo.base.Reply;
@@ -118,6 +119,11 @@ public class Verify {
      */
     public LoginInfo getLoinInfo() {
         var map = HashOps.entries("User:" + tokenKey.getUserId());
+        var openIds = map.get("openIds");
+        if (openIds != null) {
+            map.put("openIds", Json.toList(openIds, OpenId.class));
+        }
+
         var loginInfo = Json.toBean(map, LoginInfo.class);
 
         loginInfo.setAppId(basis.getAppId());
