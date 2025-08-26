@@ -125,7 +125,6 @@ public class Verify {
         }
 
         var loginInfo = Json.toBean(map, LoginInfo.class);
-
         loginInfo.setAppId(basis.getAppId());
         loginInfo.setTenantId(basis.getTenantId());
         loginInfo.setTenantName(basis.getTenantName());
