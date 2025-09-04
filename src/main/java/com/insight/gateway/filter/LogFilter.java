@@ -74,6 +74,12 @@ public class LogFilter implements GlobalFilter, Ordered {
         // 构造入参对象
         var method = request.getMethod();
         var log = new LogDto();
+        log.setRequestId(requestId);
+        if (Util.isNotEmpty(token)) {
+            var appId = Json.toToken(token).getAppId();
+            log.setAppId(appId);
+        }
+
         log.setSource(source);
         log.setMethod(method.name());
         log.setUrl(path.value());
@@ -89,13 +95,7 @@ public class LogFilter implements GlobalFilter, Ordered {
             return readBody(exchange, chain, log);
         }
 
-        if (Util.isEmpty(token)) {
-            logger.info("requestId: {}. 请求参数: {}", requestId, log);
-        } else {
-            var appId = Json.toToken(token).getAppId();
-            logger.info("requestId: {}. AppId: {}. 请求参数: {}", requestId, appId, log);
-        }
-
+        logger.info(log.toString());
         return chain.filter(exchange);
     }
 
@@ -129,7 +129,6 @@ public class LogFilter implements GlobalFilter, Ordered {
 
             var mutatedExchange = exchange.mutate().request(mutatedRequest).build();
             return ServerRequest.create(mutatedExchange, config.getReaders()).bodyToMono(String.class).doOnNext(body -> {
-                String requestId = exchange.getAttribute("requestId");
                 if (Pattern.matches("^\\[.*]$", body)) {
                     var list = Json.toList(body, Object.class);
                     log.setBody(list == null ? body : list);
@@ -141,7 +140,7 @@ public class LogFilter implements GlobalFilter, Ordered {
                 }
 
                 log.setBodyLength(body.length());
-                logger.info("requestId: {}. 请求参数：{}", requestId, log);
+                logger.info(log.toString());
             }).then(chain.filter(mutatedExchange));
         });
     }

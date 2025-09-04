@@ -12,6 +12,16 @@ import java.util.Map;
 public class LogDto extends BaseXo {
 
     /**
+     * 请求ID
+     */
+    private String requestId;
+
+    /**
+     * 应用ID
+     */
+    Long appId;
+
+    /**
      * 来源IP
      */
     private String source;
@@ -45,6 +55,22 @@ public class LogDto extends BaseXo {
      * 请求体数据
      */
     private Object body;
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
+    }
+
+    public Long getAppId() {
+        return appId;
+    }
+
+    public void setAppId(Long appId) {
+        this.appId = appId;
+    }
 
     public String getSource() {
         return source;
