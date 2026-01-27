@@ -131,6 +131,7 @@ public class Verify {
         loginInfo.setOrgId(basis.getOrgId());
         loginInfo.setOrgName(basis.getOrgName());
         loginInfo.setAreaCode(basis.getAreaCode());
+        loginInfo.setManager(Util.isNotEmpty(basis.getPermitFuncs()));
         return loginInfo;
     }
 
