@@ -55,9 +55,13 @@ public class LogFilter implements WebFilter, Ordered {
         var path = request.getPath();
         var requestId = Util.uuid();
         var fingerprint = Util.md5(source + userAgent + token);
-        exchange.getAttributes().put("requestId", requestId);
-        request.mutate().header("requestId", requestId).build();
-        request.mutate().header("fingerprint", fingerprint).build();
+
+        var newRequest = exchange.getRequest().mutate()
+                .header("requestId", requestId)
+                .header("fingerprint", fingerprint)
+                .build();
+        var newExchange = exchange.mutate().request(newRequest).build();
+        newExchange.getAttributes().put("requestId", requestId);
 
         // 处理请求头
         var headerMap = headers.toSingleValueMap().entrySet().stream()
@@ -89,7 +93,7 @@ public class LogFilter implements WebFilter, Ordered {
         }
 
         logger.info(log.toString());
-        return chain.filter(exchange);
+        return chain.filter(newExchange);
     }
 
     /**

@@ -13,7 +13,6 @@ import com.insight.utils.pojo.base.Reply;
 import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.KeyOps;
 import com.insight.utils.redis.StringOps;
-
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -125,8 +124,11 @@ public class AuthFilter implements WebFilter, Ordered {
 
         // 请求头附加用户信息
         loginInfo = verify.getLoinInfo();
-        request.mutate().header("loginInfo", Json.toBase64(loginInfo)).build();
-        return chain.filter(exchange);
+        var newRequest = exchange.getRequest().mutate()
+                .header("loginInfo", Json.toBase64(loginInfo))
+                .build();
+        var newExchange = exchange.mutate().request(newRequest).build();
+        return chain.filter(newExchange);
     }
 
     /**
@@ -153,7 +155,7 @@ public class AuthFilter implements WebFilter, Ordered {
 
         var now = DateTime.formatCurrentTime();
         var key = "Surplus:" + limitKey;
-        if (!KeyOps.hasKey(key)){
+        if (!KeyOps.hasKey(key)) {
             StringOps.set(key, now, gap);
             return false;
         }
@@ -183,7 +185,7 @@ public class AuthFilter implements WebFilter, Ordered {
         }
 
         var key = "Limit:" + limitKey;
-        if (!KeyOps.hasKey(key)){
+        if (!KeyOps.hasKey(key)) {
             StringOps.set(key, 1, cycle);
             return false;
         }
