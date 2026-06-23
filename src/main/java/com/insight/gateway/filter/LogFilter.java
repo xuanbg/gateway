@@ -125,7 +125,6 @@ public class LogFilter implements WebFilter, Ordered {
                 public Flux<DataBuffer> getBody() {
                     return Flux.defer(() -> {
                         var buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-                        // 注意：wrap 后引用计数为 1，下游会自动 release，绝不能再 retain
                         return Flux.just(buffer);
                     });
                 }
