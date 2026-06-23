@@ -1,6 +1,8 @@
 spring:
   application:
     name: common-gateway
+  main:
+    web-application-type: reactive
   cloud:
     consul:
       config:
