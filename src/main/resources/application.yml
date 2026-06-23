@@ -7,8 +7,6 @@ spring:
         defaultContext: ${spring.application.name}
         format: yaml
         prefixes: config
-  main:
-    web-application-type: reactive
 ---
 spring:
   cloud:
