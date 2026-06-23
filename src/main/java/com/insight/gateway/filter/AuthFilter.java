@@ -66,9 +66,6 @@ public class AuthFilter implements WebFilter, Ordered {
         var request = exchange.getRequest();
         var headers = request.getHeaders();
         var fingerprint = headers.getFirst("fingerprint");
-
-        var response = exchange.getResponse();
-        var responseHeaders = response.getHeaders();
         var method = request.getMethod();
 
         var path = request.getPath().value();

@@ -89,7 +89,7 @@ public class LogFilter implements WebFilter, Ordered {
         // 如Body不为空,则将body内容加入日志
         var length = headers.getContentLength();
         if (length > 0) {
-            return readBody(exchange, chain, log);
+            return readBody(newExchange, chain, log);
         }
 
         logger.info(log.toString());
