@@ -1,10 +1,8 @@
 package com.insight.gateway.common;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.reactive.config.CorsRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 /**
  * @author 宣炳刚
@@ -12,23 +10,20 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
  * @remark
  */
 @Configuration
-public class CorsConfig {
+public class CorsConfig implements WebFluxConfigurer {
 
     /**
-     * 跨域配置
+     * 添加跨域请求配置
      *
-     * @return CorsWebFilter
+     * @param registry CorsRegistry
      */
-    @Bean
-    public CorsWebFilter corsFilter() {
-        var config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-
-        var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return new CorsWebFilter(source);
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("*")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }
