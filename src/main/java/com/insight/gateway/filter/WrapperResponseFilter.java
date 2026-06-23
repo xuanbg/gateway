@@ -3,14 +3,14 @@ package com.insight.gateway.filter;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +24,7 @@ import java.util.List;
  * @remark
  */
 @Component
-public class WrapperResponseFilter implements GlobalFilter, Ordered {
+public class WrapperResponseFilter implements WebFilter, Ordered {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
@@ -35,7 +35,7 @@ public class WrapperResponseFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         var originalResponse = exchange.getResponse();
         var responseDecorator = new ServerHttpResponseDecorator(originalResponse) {
 

@@ -13,13 +13,14 @@ import com.insight.utils.pojo.base.Reply;
 import com.insight.utils.redis.HashOps;
 import com.insight.utils.redis.KeyOps;
 import com.insight.utils.redis.StringOps;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
+
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -31,7 +32,7 @@ import java.time.LocalDateTime;
  * @remark 身份验证及鉴权过滤器
  */
 @Component
-public class AuthFilter implements GlobalFilter, Ordered {
+public class AuthFilter implements WebFilter, Ordered {
     private LocalDateTime refreshTime;
 
     /**
@@ -62,7 +63,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         var request = exchange.getRequest();
         var headers = request.getHeaders();
         var fingerprint = headers.getFirst("fingerprint");

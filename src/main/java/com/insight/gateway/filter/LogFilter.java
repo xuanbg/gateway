@@ -5,25 +5,23 @@ import com.insight.utils.Json;
 import com.insight.utils.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -32,14 +30,9 @@ import java.util.stream.Collectors;
  * @remark 调试信息过滤器
  */
 @Component
-public class LogFilter implements GlobalFilter, Ordered {
+public class LogFilter implements WebFilter, Ordered {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final List<String> allowHeaders = Arrays.asList("Accept", "Accept-Encoding", "Authorization", "Content-Type", "Host", "fingerprint", "token", "key", "User-Agent");
-    private final ServerCodecConfigurer config;
-
-    public LogFilter(ServerCodecConfigurer config) {
-        this.config = config;
-    }
 
     /**
      * 请求信息日志过滤器
@@ -49,7 +42,7 @@ public class LogFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         var request = exchange.getRequest();
         var headers = request.getHeaders();
         var source = getIp(headers);
@@ -107,41 +100,38 @@ public class LogFilter implements GlobalFilter, Ordered {
      * @param log      日志DTO
      * @return Mono
      */
-    private Mono<Void> readBody(ServerWebExchange exchange, GatewayFilterChain chain, LogDto log) {
-        var dataBufferFlux = exchange.getRequest().getBody();
-        return DataBufferUtils.join(dataBufferFlux).flatMap(dataBuffer -> {
+    private Mono<Void> readBody(ServerWebExchange exchange, WebFilterChain chain, LogDto log) {
+        var originalBody = exchange.getRequest().getBody();
+        return DataBufferUtils.join(originalBody).flatMap(dataBuffer -> {
             var bytes = new byte[dataBuffer.readableByteCount()];
             dataBuffer.read(bytes);
             DataBufferUtils.release(dataBuffer);
 
-            // 重新构造请求
+            var body = new String(bytes, StandardCharsets.UTF_8).trim();
+            if (body.startsWith("[")) {
+                var list = Json.toList(body, Object.class);
+                log.setBody(list != null ? list : body);
+            } else if (body.startsWith("{")) {
+                Map obj = Json.toMap(body);
+                log.setBody(obj != null ? obj : body);
+            } else {
+                log.setBody(body);
+            }
+            log.setBodyLength(body.length());
+            logger.info(log.toString());
+
             ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
                 @Override
                 public Flux<DataBuffer> getBody() {
                     return Flux.defer(() -> {
                         var buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-                        DataBufferUtils.retain(buffer);
-
+                        // 注意：wrap 后引用计数为 1，下游会自动 release，绝不能再 retain
                         return Flux.just(buffer);
                     });
                 }
             };
-
             var mutatedExchange = exchange.mutate().request(mutatedRequest).build();
-            return ServerRequest.create(mutatedExchange, config.getReaders()).bodyToMono(String.class).doOnNext(body -> {
-                if (Pattern.matches("^\\[.*]$", body)) {
-                    var list = Json.toList(body, Object.class);
-                    log.setBody(list == null ? body : list);
-                } else if (Pattern.matches("^\\{.*}$", body)) {
-                    Map obj = Json.toMap(body);
-                    log.setBody(obj == null ? body : obj);
-                } else {
-                    log.setBody(body);
-                }
-
-                log.setBodyLength(body.length());
-                logger.info(log.toString());
-            }).then(chain.filter(mutatedExchange));
+            return chain.filter(mutatedExchange);
         });
     }
 

@@ -2,11 +2,11 @@ package com.insight.gateway.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 /**
@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
  * @remark 调试信息过滤器
  */
 @Component
-public class DurationFilter implements GlobalFilter, Ordered {
+public class DurationFilter implements WebFilter, Ordered {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String COUNT_START_TIME = "StartTime";
 
@@ -27,7 +27,7 @@ public class DurationFilter implements GlobalFilter, Ordered {
      * @return Mono
      */
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         exchange.getAttributes().put(COUNT_START_TIME, System.currentTimeMillis());
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
             String requestId = exchange.getAttribute("requestId");
