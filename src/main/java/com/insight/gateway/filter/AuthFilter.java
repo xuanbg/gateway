@@ -121,11 +121,11 @@ public class AuthFilter implements WebFilter, Ordered {
 
         // 请求头附加用户信息
         loginInfo = verify.getLoinInfo();
-        var newRequest = exchange.getRequest().mutate()
+        request = exchange.getRequest().mutate()
                 .header("loginInfo", Json.toBase64(loginInfo))
                 .build();
-        var newExchange = exchange.mutate().request(newRequest).build();
-        return chain.filter(newExchange);
+        exchange = exchange.mutate().request(request).build();
+        return chain.filter(exchange);
     }
 
     /**

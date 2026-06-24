@@ -56,15 +56,15 @@ public class LogFilter implements WebFilter, Ordered {
         var requestId = Util.uuid();
         var fingerprint = Util.md5(source + userAgent + token);
 
-        var newRequest = exchange.getRequest().mutate()
+        request = exchange.getRequest().mutate()
                 .header("requestId", requestId)
                 .header("fingerprint", fingerprint)
                 .build();
-        var newExchange = exchange.mutate().request(newRequest).build();
-        newExchange.getAttributes().put("requestId", requestId);
+        exchange = exchange.mutate().request(request).build();
+        exchange.getAttributes().put("requestId", requestId);
 
         // 处理请求头
-        var headerMap = headers.toSingleValueMap().entrySet().stream()
+        var headerMap = request.getHeaders().toSingleValueMap().entrySet().stream()
                 .filter(e -> allowHeaders.stream().anyMatch(i -> i.equalsIgnoreCase(e.getKey())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -87,13 +87,13 @@ public class LogFilter implements WebFilter, Ordered {
         log.setParams(params.isEmpty() ? null : params.toSingleValueMap());
 
         // 如Body不为空,则将body内容加入日志
-        var length = headers.getContentLength();
+        var length = request.getHeaders().getContentLength();
         if (length > 0) {
-            return readBody(newExchange, chain, log);
+            return readBody(exchange, chain, log);
         }
 
         logger.info(log.toString());
-        return chain.filter(newExchange);
+        return chain.filter(exchange);
     }
 
     /**
