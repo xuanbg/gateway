@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
  */
 @Component
 public class AuthFilter implements WebFilter, Ordered {
+    private final EnvUtil env;
     private LocalDateTime refreshTime;
 
     /**
@@ -53,6 +54,15 @@ public class AuthFilter implements WebFilter, Ordered {
      * 限流键名
      */
     private String limitKey;
+
+    /**
+     * 构造函数
+     *
+     * @param env EnvUtil
+     */
+    public AuthFilter(EnvUtil env) {
+        this.env = env;
+    }
 
     /**
      * 身份验证及鉴权过滤器
@@ -112,7 +122,7 @@ public class AuthFilter implements WebFilter, Ordered {
             return initResponse(exchange);
         }
 
-        var verify = new Verify(requestId, token, fingerprint);
+        var verify = new Verify(requestId, env, token, fingerprint);
         reply = verify.compare(config.getAuthCode());
         if (!reply.getSuccess()) {
             KeyOps.delete("Surplus:" + limitKey);
@@ -235,7 +245,7 @@ public class AuthFilter implements WebFilter, Ordered {
         var now = LocalDateTime.now();
         if (!HashOps.hasKey(key, hash) && (refreshTime == null || now.isAfter(refreshTime.plusMinutes(5)))) {
             refreshTime = now;
-            HttpClient.get(EnvUtil.getValue("insight.loadInterface"));
+            HttpClient.get(env.getValue("insight.loadInterface"));
         }
 
         return HashOps.get(key, hash, InterfaceDto.class);

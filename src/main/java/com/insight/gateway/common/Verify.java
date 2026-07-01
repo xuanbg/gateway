@@ -27,6 +27,7 @@ public class Verify {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String requestId;
     private final TokenKey tokenKey;
+    private final EnvUtil env;
 
     /**
      * 令牌安全码
@@ -45,8 +46,9 @@ public class Verify {
      * @param token       访问令牌
      * @param fingerprint 用户特征串
      */
-    public Verify(String requestId, String token, String fingerprint) {
+    public Verify(String requestId, EnvUtil env, String token, String fingerprint) {
         this.requestId = requestId;
+        this.env = env;
 
         tokenKey = Json.toToken(token);
         if (tokenKey == null) {
@@ -156,7 +158,7 @@ public class Verify {
             var headers = new HashMap<String, String>();
             headers.put("loginInfo", Json.toBase64(getLoinInfo()));
 
-            var url = EnvUtil.getValue("insight.authCodeInterface");
+            var url = env.getValue("insight.authCodeInterface");
             var reply = HttpUtil.get(url, headers, Reply.class);
             basis.setPermitFuncs(reply.getListFromData(String.class));
             basis.setPermitTime(LocalDateTime.now());
