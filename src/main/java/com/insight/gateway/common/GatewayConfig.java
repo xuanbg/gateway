@@ -43,6 +43,7 @@ public class GatewayConfig {
                 .route("hxb-teach", r -> r.path("/hxb/teach/**").uri("lb://hxb-prepare"))
                 .route("hxb-research", r -> r.path("/hxb/research/**").uri("lb://hxb-research"))
                 .route("hxb-agent", r -> r.path("/hxb/agent/**").uri("lb://hxb-research"))
+                .route("research", r -> r.path("/hxbresearch/**").uri("lb://hxb-research"))
                 .route("hxb-study", r -> r.path("/hxb/study/**").uri("lb://hxb-study"))
                 .route("hxb-tutor", r -> r.path("/hxb/tutor/**").uri("lb://hxb-tutor"))
                 .route("hxb-note", r -> r.path("/hxb/note/**").uri("lb://hxb-tutor"))
