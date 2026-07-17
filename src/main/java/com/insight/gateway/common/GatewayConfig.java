@@ -43,6 +43,7 @@ public class GatewayConfig {
                 .route("hxb-teach", r -> r.path("/hxb/teach/**").uri("lb://hxb-prepare"))
                 .route("hxb-research4", r -> r.path("/hxb/research/**").uri("lb://hxb-research4"))
                 .route("hxb-agent", r -> r.path("/hxb/agent/**").uri("lb://hxb-research4"))
+                .route("hxb-contest", r -> r.path("/contest/**").uri("lb://hxb-research4"))
                 .route("hxb-research", r -> r.path("/hxbresearch/**").uri("lb://hxb-research"))
                 .route("hxb-study", r -> r.path("/hxb/study/**").uri("lb://hxb-study"))
                 .route("hxb-tutor", r -> r.path("/hxb/tutor/**").uri("lb://hxb-tutor"))
@@ -54,7 +55,6 @@ public class GatewayConfig {
                 .route("hxb-promote", r -> r.path("/hxb/promote/**").uri("lb://hxb-promote"))
                 .route("hxb-stats", r -> r.path("/hxb/stats/**").uri("lb://hxb-promote"))
                 .route("hxb-credit", r -> r.path("/hxb/credit/**").uri("lb://hxb-credit"))
-                .route("hxb-contest", r -> r.path("/contest/**").uri("lb://hxb-contest"))
                 .route("hxb-statistical", r -> r.path("/statistical/**").uri("lb://hxb-statistical"))
                 .build();
     }
